@@ -28,7 +28,7 @@ const Login: React.FC<LoginProps> = ({ onClose }) => {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 border rounded-lg"
+              className="w-full p-3 border rounded-lg text-gray-800"
               required
             />
           </div>
@@ -39,7 +39,7 @@ const Login: React.FC<LoginProps> = ({ onClose }) => {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 border rounded-lg"
+              className="w-full p-3 border rounded-lg text-gray-800"
               required
             />
           </div>

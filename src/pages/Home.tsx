@@ -59,10 +59,26 @@ const Home = () => {
             </div>
           </div>
         </section>
+        <section className="py-20">
+          <h2 className="text-3xl font-bold text-center mb-12 text-primary-800">Customer Feedback</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <p className="text-primary-600 mb-4">"PradhanFresh has the best produce I've ever tasted! The fruits are always fresh and delicious."</p>
+              <p className="text-primary-700 font-semibold">- Susrita</p>
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <p className="text-primary-600 mb-4">"I love the variety of organic vegetables available. It's so convenient to have them delivered to my door."</p>
+              <p className="text-primary-700 font-semibold">- Jane Smith</p>
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <p className="text-primary-600 mb-4">"The quality of the produce is unmatched. I highly recommend PradhanFresh to everyone."</p>
+              <p className="text-primary-700 font-semibold">- Emily Johnson</p>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
 };
 
 export default Home;
-
