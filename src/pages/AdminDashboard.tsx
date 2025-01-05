@@ -93,7 +93,8 @@ const AdminDashboard = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('adminAuth');
     navigate('/');
-  };
+  };0
+  
 
   if (!isAuthenticated) {
     return (

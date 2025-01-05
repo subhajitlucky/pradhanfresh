@@ -44,6 +44,9 @@ const Products = () => {
     setFilteredProducts(result);
   }, [category, sortBy, products]);
 
+  
+
+
   return (
     <div className="bg-primary-50 py-20">
       <div className="container mx-auto px-4">

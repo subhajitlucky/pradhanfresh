@@ -1,5 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import freshFruits from '@/assets/images/fresh-fruits.jpg';
+import freshVegetables from '@/assets/images/fresh-v.png';
+import organicProduce from '@/assets/images/op.png';
 
 const Home = () => {
   return (
@@ -12,21 +15,21 @@ const Home = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             <div className="bg-white rounded-lg shadow-lg overflow-hidden transform transition duration-300 hover:scale-105">
-              <img src="/placeholder.svg?height=300&width=400" alt="Fresh Fruits" className="w-full h-64 object-cover" />
+              <img src={freshFruits} alt="Fresh Fruits" className="w-full h-64 object-cover" />
               <div className="p-6">
                 <h2 className="text-2xl font-semibold mb-2 text-primary-700">Farm-Fresh Fruits</h2>
                 <p className="text-primary-600">Handpicked, juicy, and bursting with flavor.</p>
               </div>
             </div>
             <div className="bg-white rounded-lg shadow-lg overflow-hidden transform transition duration-300 hover:scale-105">
-              <img src="/placeholder.svg?height=300&width=400" alt="Fresh Vegetables" className="w-full h-64 object-cover" />
+              <img src={freshVegetables} alt="Fresh Vegetables" className="w-full h-64 object-cover" />
               <div className="p-6">
                 <h2 className="text-2xl font-semibold mb-2 text-primary-700">Crisp Vegetables</h2>
                 <p className="text-primary-600">Garden-fresh and packed with nutrients.</p>
               </div>
             </div>
             <div className="bg-white rounded-lg shadow-lg overflow-hidden transform transition duration-300 hover:scale-105">
-              <img src="/placeholder.svg?height=300&width=400" alt="Organic Produce" className="w-full h-64 object-cover" />
+              <img src={organicProduce} alt="Organic Produce" className="w-full h-64 object-cover" />
               <div className="p-6">
                 <h2 className="text-2xl font-semibold mb-2 text-primary-700">100% Organic</h2>
                 <p className="text-primary-600">Certified organic, pesticide-free goodness.</p>

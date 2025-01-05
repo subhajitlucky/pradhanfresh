@@ -6,7 +6,7 @@
         "price": 1.99,
         "description": "Fresh red apples",
         "category": "fruits",
-        "image": "/placeholder.svg?height=200&width=300",
+        "image": "src/assets/images/apple.jpg",
         "availability": true
       },
       {
@@ -15,7 +15,7 @@
         "price": 0.99,
         "description": "Ripe yellow bananas",
         "category": "fruits",
-        "image": "/placeholder.svg?height=200&width=300",
+        "image": "/src/assets/images/banana.jpg",
         "availability": true
       },
       {
@@ -24,7 +24,7 @@
         "price": 1.49,
         "description": "Crunchy orange carrots",
         "category": "vegetables",
-        "image": "/placeholder.svg?height=200&width=300",
+        "image": "/src/assets/images/carrot.jpg",
         "availability": true
       },
       {
@@ -33,7 +33,7 @@
         "price": 2.49,
         "description": "Fresh green broccoli",
         "category": "vegetables",
-        "image": "/placeholder.svg?height=200&width=300",
+        "image": "/src/assets/images/brocoli.jpg",
         "availability": true
       }
     ]
