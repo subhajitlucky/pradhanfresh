@@ -1,0 +1,69 @@
+/* About Page Styles */
+
+.about-container {
+  padding: 5rem 0;
+}
+
+.about-main-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.about-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.about-content-wrapper {
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.about-paragraph {
+  margin-bottom: 1.5rem;
+  font-size: 1.125rem;
+}
+
+.about-values-section {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.about-values-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.about-values-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .about-values-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.about-value-card {
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+}
+
+.about-value-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.about-value-description {
+  /* Typography preserved, color removed */
+} 

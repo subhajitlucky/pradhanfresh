@@ -1,0 +1,131 @@
+/* Navbar Component Styles */
+.navbar {
+  box-shadow: var(--shadow-lg);
+  position: relative;
+}
+
+.navbar-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-4);
+}
+
+@media (min-width: 640px) {
+  .navbar-container {
+    padding: 0 var(--spacing-6);
+  }
+}
+
+@media (min-width: 1024px) {
+  .navbar-container {
+    padding: 0 var(--spacing-8);
+  }
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 4rem;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.navbar-logo {
+  height: 3rem;
+  width: auto;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.navbar-title {
+  margin-left: var(--spacing-2);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.navbar-links {
+  display: none;
+  align-items: baseline;
+  gap: var(--spacing-4);
+  margin-left: 2.5rem;
+}
+
+@media (min-width: 768px) {
+  .navbar-links {
+    display: flex;
+  }
+}
+
+.nav-link {
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-sm);
+  font-size: 1.125rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.nav-button {
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-sm);
+  font-size: 1.125rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+}
+
+.mobile-menu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2);
+  border-radius: var(--radius-sm);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .mobile-menu-toggle {
+    display: none;
+  }
+}
+
+.mobile-menu {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .mobile-menu.active {
+    display: block;
+  }
+}
+
+.mobile-menu-content {
+  padding: var(--spacing-2) var(--spacing-4) var(--spacing-3);
+}
+
+.mobile-nav-link {
+  display: block;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-sm);
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-bottom: var(--spacing-1);
+  text-decoration: none;
+}
+
+.mobile-nav-button {
+  width: 100%;
+  text-align: left;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-sm);
+  font-size: 1.125rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+} 

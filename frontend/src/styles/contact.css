@@ -1,0 +1,106 @@
+/* Contact Page Styles */
+
+.contact-container {
+  padding: 5rem 0;
+}
+
+.contact-main-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.contact-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.contact-content-wrapper {
+  max-width: 672px;
+  margin: 0 auto;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.contact-form {
+  margin-bottom: 3rem;
+}
+
+.contact-form-group {
+  margin-bottom: 1rem;
+}
+
+.contact-form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.contact-form-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 0.25rem;
+}
+
+.contact-form-input:focus {
+  outline: none;
+}
+
+.contact-form-textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 0.25rem;
+  resize: vertical;
+}
+
+.contact-form-textarea:focus {
+  outline: none;
+}
+
+.contact-submit-button {
+  padding: 0.5rem 1.5rem;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+}
+
+.contact-reviews-section {
+  margin-bottom: 3rem;
+}
+
+.contact-section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.contact-reviews-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.contact-reviews-list li {
+  margin-bottom: 1rem;
+}
+
+.contact-review-item {
+  padding: 1rem;
+  border-radius: 0.25rem;
+}
+
+.contact-review-name {
+  font-weight: 600;
+}
+
+.contact-review-text {
+  /* Typography preserved, color removed */
+}
+
+.contact-no-reviews {
+  /* Typography preserved, color removed */
+} 

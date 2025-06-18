@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import '../styles/contact.css';
 
 interface ContactForm {
   name: string;
@@ -45,105 +46,105 @@ const Contact = () => {
   };
 
   return (
-    <div className="bg-primary-50 py-20">
-      <div className="container mx-auto px-4">
-        <h1 className="text-4xl font-bold mb-8 text-center text-primary-800">Contact Us</h1>
-        <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-lg">
-          <form onSubmit={handleSubmit} className="mb-12">
-            <div className="mb-4">
-              <label htmlFor="name" className="block mb-2 text-primary-700">Name</label>
+    <div className="contact-container">
+      <div className="contact-main-content">
+        <h1 className="contact-title">Contact Us</h1>
+        <div className="contact-content-wrapper">
+          <form onSubmit={handleSubmit} className="contact-form">
+            <div className="contact-form-group">
+              <label htmlFor="name" className="contact-form-label">Name</label>
               <input
                 type="text"
                 id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="contact-form-input"
                 required
               />
             </div>
-            <div className="mb-4">
-              <label htmlFor="email" className="block mb-2 text-primary-700">Email</label>
+            <div className="contact-form-group">
+              <label htmlFor="email" className="contact-form-label">Email</label>
               <input
                 type="email"
                 id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="contact-form-input"
                 required
               />
             </div>
-            <div className="mb-4">
-              <label htmlFor="phone" className="block mb-2 text-primary-700">Phone Number</label>
+            <div className="contact-form-group">
+              <label htmlFor="phone" className="contact-form-label">Phone Number</label>
               <input
                 type="tel"
                 id="phone"
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="contact-form-input"
                 required
               />
             </div>
-            <div className="mb-4">
-              <label htmlFor="message" className="block mb-2 text-primary-700">Message</label>
+            <div className="contact-form-group">
+              <label htmlFor="message" className="contact-form-label">Message</label>
               <textarea
                 id="message"
                 name="message"
                 value={formData.message}
                 onChange={handleInputChange}
-                className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="contact-form-textarea"
                 rows={4}
                 required
               ></textarea>
             </div>
-            <button type="submit" className="bg-secondary-500 text-white px-6 py-2 rounded-full hover:bg-secondary-600 transition-colors">
+            <button type="submit" className="contact-submit-button">
               Send Message
             </button>
           </form>
 
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-4 text-primary-800">Leave a Review</h2>
+          <div className="contact-reviews-section">
+            <h2 className="contact-section-title">Leave a Review</h2>
             <form onSubmit={handleReviewSubmit}>
-              <div className="mb-4">
-                <label htmlFor="reviewName" className="block mb-2 text-primary-700">Name</label>
+              <div className="contact-form-group">
+                <label htmlFor="reviewName" className="contact-form-label">Name</label>
                 <input
                   type="text"
                   id="reviewName"
                   value={reviewName}
                   onChange={(e) => setReviewName(e.target.value)}
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="contact-form-input"
                   required
                 />
               </div>
-              <div className="mb-4">
-                <label htmlFor="reviewMessage" className="block mb-2 text-primary-700">Review</label>
+              <div className="contact-form-group">
+                <label htmlFor="reviewMessage" className="contact-form-label">Review</label>
                 <textarea
                   id="reviewMessage"
                   value={reviewMessage}
                   onChange={(e) => setReviewMessage(e.target.value)}
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="contact-form-textarea"
                   rows={4}
                   required
                 ></textarea>
               </div>
-              <button type="submit" className="bg-secondary-500 text-white px-6 py-2 rounded-full hover:bg-secondary-600 transition-colors">
+              <button type="submit" className="contact-submit-button">
                 Submit Review
               </button>
             </form>
           </div>
 
           <div>
-            <h2 className="text-2xl font-bold mb-4 text-primary-800">Customer Reviews</h2>
+            <h2 className="contact-section-title">Customer Reviews</h2>
             {reviews.length === 0 ? (
-              <p className="text-primary-600">No reviews yet. Be the first to leave a review!</p>
+              <p className="contact-no-reviews">No reviews yet. Be the first to leave a review!</p>
             ) : (
-              <ul className="space-y-4">
+              <ul className="contact-reviews-list">
                 {reviews.map((review, index) => (
-                  <li key={index} className="bg-primary-100 p-4 rounded">
-                    <p className="font-semibold text-primary-700">{review.name}</p>
-                    <p className="text-primary-600">{review.message}</p>
+                  <li key={index} className="contact-review-item">
+                    <p className="contact-review-name">{review.name}</p>
+                    <p className="contact-review-text">{review.message}</p>
                   </li>
                 ))}
               </ul>

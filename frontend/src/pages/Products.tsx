@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import '../styles/products.css';
 
 interface Product {
   id: number;
@@ -48,14 +49,14 @@ const Products = () => {
 
 
   return (
-    <div className="bg-primary-50 py-20">
-      <div className="container mx-auto px-4">
-        <h1 className="text-4xl font-bold mb-8 text-center text-primary-800">Our Products</h1>
-        <div className="mb-8 flex justify-center space-x-4">
+    <div className="products-container">
+      <div className="products-main-content">
+        <h1 className="products-title">Our Products</h1>
+        <div className="products-filters">
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="p-2 border rounded bg-white text-primary-700"
+            className="products-filter-select"
           >
             <option value="all">All Categories</option>
             <option value="fruits">Fruits</option>
@@ -64,21 +65,21 @@ const Products = () => {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="p-2 border rounded bg-white text-primary-700"
+            className="products-filter-select"
           >
             <option value="name">Sort by Name</option>
             <option value="price">Sort by Price</option>
           </select>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        <div className="products-grid">
           {(showAll ? filteredProducts : filteredProducts.slice(0, 8)).map((product) => (
-            <div key={product.id} className="bg-white shadow-lg rounded-lg overflow-hidden transform transition duration-300 hover:scale-105">
-              <img src={product.image} alt={product.name} className="w-full h-48 object-cover" />
-              <div className="p-4">
-                <h2 className="text-xl font-semibold mb-2 text-primary-700">{product.name}</h2>
-                <p className="text-primary-600 mb-2">${product.price.toFixed(2)}</p>
-                <p className="text-sm text-primary-500 mb-2">{product.description}</p>
-                <p className={`text-sm ${product.availability ? 'text-green-600' : 'text-red-600'}`}>
+            <div key={product.id} className="product-card">
+              <img src={product.image} alt={product.name} className="product-image" />
+              <div className="product-content">
+                <h2 className="product-name">{product.name}</h2>
+                <p className="product-price">${product.price.toFixed(2)}</p>
+                <p className="product-description">{product.description}</p>
+                <p className={`product-availability ${product.availability ? 'product-in-stock' : 'product-out-of-stock'}`}>
                   {product.availability ? 'In Stock' : 'Out of Stock'}
                 </p>
               </div>
@@ -86,10 +87,10 @@ const Products = () => {
           ))}
         </div>
         {!showAll && filteredProducts.length > 8 && (
-          <div className="text-center mt-8">
+          <div className="products-show-more">
             <button
               onClick={() => setShowAll(true)}
-              className="bg-secondary-500 text-white px-6 py-2 rounded-full hover:bg-secondary-600 transition-colors"
+              className="products-show-more-button"
             >
               Show More
             </button>
