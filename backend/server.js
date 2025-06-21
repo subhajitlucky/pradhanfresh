@@ -3,7 +3,7 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 const authRoutes = require('./routes/auth');
 const signupRoute = require('./routes/signup');
 const loginRoute = require('./routes/login');
@@ -30,3 +30,6 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+// Export for Vercel
+module.exports = app;
