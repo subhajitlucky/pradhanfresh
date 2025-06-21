@@ -1,0 +1,9 @@
+{
+  "projectId": "pradhanfresh",
+  "orgId": "personal",
+  "settings": {
+    "framework": "vite",
+    "buildCommand": "cd frontend && npm install && npm run build",
+    "outputDirectory": "frontend/dist"
+  }
+}
