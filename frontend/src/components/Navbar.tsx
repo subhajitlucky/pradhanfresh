@@ -1,12 +1,18 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import Login from './Login';
+import { useAuth } from '../context/AuthContext';
 import logoImage from '@/assets/images/logo.jpg';
 import '../styles/components.css';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     <nav className="navbar">
@@ -30,7 +36,17 @@ const Navbar = () => {
             <Link to="/about" className="nav-link">About Us</Link>
             <Link to="/products" className="nav-link">Products</Link>
             <Link to="/contact" className="nav-link">Contact</Link>
-            <button onClick={() => setShowLogin(true)} className="nav-button">Login</button>
+            {user ? (
+              <>
+                <Link to="/profile" className="nav-link">Profile</Link>
+                <button onClick={handleLogout} className="nav-button">Logout</button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="nav-link">Login</Link>
+                <Link to="/signup" className="nav-button">Sign Up</Link>
+              </>
+            )}
           </div>
           <div className="mobile-menu-toggle">
             <button
@@ -57,10 +73,19 @@ const Navbar = () => {
           <Link to="/about" className="mobile-nav-link">About Us</Link>
           <Link to="/products" className="mobile-nav-link">Products</Link>
           <Link to="/contact" className="mobile-nav-link">Contact</Link>
-          <button onClick={() => setShowLogin(true)} className="mobile-nav-button">Login</button>
+          {user ? (
+            <>
+              <Link to="/profile" className="mobile-nav-link">Profile</Link>
+              <button onClick={handleLogout} className="mobile-nav-button">Logout</button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="mobile-nav-link">Login</Link>
+              <Link to="/signup" className="mobile-nav-button">Sign Up</Link>
+            </>
+          )}
         </div>
       </div>
-      {showLogin && <Login onClose={() => setShowLogin(false)} />}
     </nav>
   );
 };

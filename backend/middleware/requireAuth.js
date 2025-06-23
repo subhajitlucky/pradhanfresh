@@ -1,10 +1,10 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const ACCESS_SECRET = process.env.ACCESS_TOKEN_SECRET;
 
 const requireAuth = (req, res, next) => {
-  // ✅ Step 0: Check if JWT_SECRET exists
-  if (!JWT_SECRET) {
+  // ✅ Step 0: Check if ACCESS_SECRET exists
+  if (!ACCESS_SECRET) {
     return res.status(500).json({ error: 'Server configuration error: JWT secret not found' });
   }
   
@@ -19,7 +19,7 @@ const requireAuth = (req, res, next) => {
 
   try {
     // ✅ Step 2: Verify token
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, ACCESS_SECRET);
 
     // ✅ Step 3: Attach user to request
     req.user = decoded;

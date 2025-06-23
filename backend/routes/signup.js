@@ -1,9 +1,11 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const { PrismaClient } = require('../generated/prisma');
+const crypto = require('crypto');
+const prisma = require('../prisma/client');
+const { sendVerificationEmail } = require('../utils/email'); // Import our email function
 const router = express.Router();
 
-const prisma = new PrismaClient();
+
 
 router.post('/', async (req, res) => {
   const { name, email, password } = req.body;
@@ -40,23 +42,31 @@ router.post('/', async (req, res) => {
     // Hash the password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
+    
+    // Generate a verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
 
     // Create new user in database
     const newUser = await prisma.user.create({
       data: {
         name: name,
         email: email,
-        password: hashedPassword
+        password: hashedPassword,
+        emailVerificationToken: verificationToken, // Save the token
       }
     });
+    
+    // Send the verification email
+    await sendVerificationEmail(newUser.email, verificationToken);
 
     // Return success response (exclude password from response)
     res.status(201).json({
-      message: 'User created successfully!',
+      message: 'User created successfully! Please check your email to verify your account.',
       user: {
         id: newUser.id,
         name: newUser.name,
         email: newUser.email,
+        isEmailVerified: newUser.isEmailVerified,
         createdAt: newUser.createdAt
       }
     });
