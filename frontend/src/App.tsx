@@ -1,18 +1,27 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import About from './pages/About';
-import Products from './pages/Products';
-import Contact from './pages/Contact';
-import Signup from './pages/Signup';
-import Login from './pages/Login';
-import Profile from './pages/Profile';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import EmailVerified from './pages/EmailVerified';
-import { Link } from 'react-router-dom';
 
-import './styles/app.css';
+// Public Pages
+import Home from './pages/public/Home';
+import About from './pages/public/About';
+import Products from './pages/products/Products';
+import ProductDetail from './pages/products/ProductDetail';
+import Contact from './pages/public/Contact';
+
+// Auth Pages  
+import Signup from './pages/auth/Signup';
+import Login from './pages/auth/Login';
+import Profile from './pages/auth/Profile';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
+import EmailVerified from './pages/auth/EmailVerified';
+
+// Admin Pages
+import AdminDashboard from './pages/admin/Dashboard';
+import AdminProductForm from './pages/admin/ProductForm';
+
+// Organized Styles
+import './styles/index.css';
 
 function App() {
   return (
@@ -21,16 +30,27 @@ function App() {
         <Navbar />
         <main className="app-main">
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/products" element={<Products />} />
+            <Route path="/products/:id" element={<ProductDetail />} />
             <Route path="/contact" element={<Contact />} />
+            
+            {/* Auth Routes */}
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/email-verified/:token" element={<EmailVerified />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/products" element={<AdminDashboard />} />
+            <Route path="/admin/products/new" element={<AdminProductForm />} />
+            <Route path="/admin/products/edit/:id" element={<AdminProductForm />} />
+            <Route path="/admin/categories" element={<AdminDashboard />} />
           </Routes>
         </main>
         <footer className="app-footer">

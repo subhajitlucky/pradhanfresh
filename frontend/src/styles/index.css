@@ -1,0 +1,23 @@
+/* Main CSS Entry Point - Organized Imports */
+
+/* 1. Base Styles (loaded first) */
+@import './base/global.css';
+
+/* 2. Component Styles */
+@import './components/navbar.css';
+@import './components/forms.css';
+
+/* 3. Page-specific Styles */
+@import './pages/auth.css';
+@import './pages/public.css';
+@import './pages/admin.css';
+
+/* 4. Product-specific Styles */
+@import './products/Products.css';
+@import './products/ProductDetail.css';
+
+/* 4. Legacy app styles (will be gradually moved to appropriate files) */
+@import './pages/app.css';
+@import './pages/about.css';
+@import './pages/contact.css';
+@import './pages/home.css'; 

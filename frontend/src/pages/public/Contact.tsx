@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../styles/contact.css';
+
 
 interface ContactForm {
   name: string;

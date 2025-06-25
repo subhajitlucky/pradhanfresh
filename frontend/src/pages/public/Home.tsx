@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import freshFruits from '@/assets/images/fresh-fruits.jpg';
 import freshVegetables from '@/assets/images/fresh-v.png';
 import organicProduce from '@/assets/images/op.png';
-import '../styles/home.css';
+
 
 const Home = () => {
   return (

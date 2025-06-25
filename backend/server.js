@@ -12,9 +12,27 @@ const app = express();
 app.use(helmet());
 
 // 2. Configure CORS
+// Allow multiple origins in development (localhost & 127.0.0.1) and fallback to env variable
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174', // Vite picks next free port if 5173 is occupied
+  'http://127.0.0.1:5174',
+];
+
 const corsOptions = {
-  origin: 'http://localhost:5173', // Your frontend's origin
-  credentials: true, // To allow cookies from frontend
+  origin: function (origin, callback) {
+    // In dev tools like curl (no origin) allow
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      // Origin allowed
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
 };
 app.use(cors(corsOptions));
 

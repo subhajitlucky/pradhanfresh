@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import api from '../utils/api';
-import '../styles/forms.css';
+import api from '../../utils/api';
 
 const EmailVerified = () => {
   const [message, setMessage] = useState('Verifying your email...');

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../utils/api';
-import '../styles/forms.css';
+import api from '../../utils/api';
 
 const Signup = () => {
   const [name, setName] = useState('');
@@ -28,7 +27,7 @@ const Signup = () => {
     }
 
     try {
-      const response = await api.post('/signup', {
+      const response = await api.post('/auth/signup', {
         name,
         email,
         password,

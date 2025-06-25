@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import logoImage from '@/assets/images/logo.jpg';
-import '../styles/components.css';
+
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,6 +39,11 @@ const Navbar = () => {
             {user ? (
               <>
                 <Link to="/profile" className="nav-link">Profile</Link>
+                {user.role === 'ADMIN' && (
+                  <Link to="/admin/dashboard" className="nav-link admin-link">
+                    🛠️ Admin
+                  </Link>
+                )}
                 <button onClick={handleLogout} className="nav-button">Logout</button>
               </>
             ) : (
@@ -76,6 +81,11 @@ const Navbar = () => {
           {user ? (
             <>
               <Link to="/profile" className="mobile-nav-link">Profile</Link>
+              {user.role === 'ADMIN' && (
+                <Link to="/admin/dashboard" className="mobile-nav-link admin-link">
+                  🛠️ Admin Dashboard
+                </Link>
+              )}
               <button onClick={handleLogout} className="mobile-nav-button">Logout</button>
             </>
           ) : (

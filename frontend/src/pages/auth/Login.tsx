@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../utils/api';
-import { useAuth } from '../context/AuthContext';
-import '../styles/forms.css';
+import api from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,7 +15,7 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await api.post('/login', {
+      const response = await api.post('/auth/login', {
         email,
         password,
       });

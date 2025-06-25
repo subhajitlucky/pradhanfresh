@@ -92,6 +92,21 @@
   text-decoration: none;
 }
 
+/* Admin Link Styling */
+.nav-link.admin-link {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  border: 2px solid transparent;
+  font-weight: var(--font-weight-semibold);
+}
+
+.nav-link.admin-link:hover {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
 .nav-button {
   padding: var(--spacing-2) var(--spacing-5);
   border-radius: var(--radius-lg);
@@ -173,6 +188,19 @@
   color: var(--color-primary);
   background-color: var(--color-background-alt);
   text-decoration: none;
+}
+
+/* Mobile Admin Link Styling */
+.mobile-nav-link.admin-link {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  border: 2px solid transparent;
+  font-weight: var(--font-weight-semibold);
+}
+
+.mobile-nav-link.admin-link:hover {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: white;
 }
 
 .mobile-nav-button {

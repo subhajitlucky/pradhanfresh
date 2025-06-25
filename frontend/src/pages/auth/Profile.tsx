@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import '../styles/forms.css';
+import { useAuth } from '../../context/AuthContext';
 
 const Profile = () => {
   const { user, token } = useAuth();
