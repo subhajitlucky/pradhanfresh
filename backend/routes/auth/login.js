@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const prisma = require('../prisma/client'); // Import the single, shared instance
+const prisma = require('../../prisma/client'); // Import the single, shared instance
 const router = express.Router();
 
 const ACCESS_SECRET = process.env.ACCESS_TOKEN_SECRET;

@@ -1,8 +1,8 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
-const prisma = require('../prisma/client');
-const { sendPasswordResetEmail } = require('../utils/email');
+const prisma = require('../../prisma/client');
+const { sendPasswordResetEmail } = require('../../utils/email');
 const router = express.Router();
 
 

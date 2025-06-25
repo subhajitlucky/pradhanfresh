@@ -31,28 +31,21 @@ const limiter = rateLimit({
 app.use(limiter);
 
 const PORT = process.env.PORT || 5000;
-const authRoutes = require('./routes/auth');
-const signupRoute = require('./routes/signup');
-const loginRoute = require('./routes/login');
-const profileRoute = require('./routes/profile');
-const logoutRoute = require('./routes/logout');
-const refreshTokenRoute = require('./routes/refreshToken');
-const adminRoute = require('./routes/admin');
 
-// Middleware for authentication
-const requireAuth = require('./middleware/requireAuth');
-const requireAdmin = require('./middleware/requireAdmin');
+// Import organized route modules
+const authRoutes = require('./routes/auth');           // All auth routes
+const adminRoutes = require('./routes/admin');         // All admin routes  
+const productRoutes = require('./routes/products');    // All product routes
+const categoriesRoute = require('./routes/products/categories'); // Categories routes
 
 app.use(cookieParser());
+app.use(express.json()); // Read json data from request body
 
-app.use(express.json()); //read json data from request body
-app.use('/api/auth', authRoutes); //mount the authRoutes at /api/auth
-app.use('/api/signup', signupRoute); //mount the signupRoutes at /api/signup
-app.use('/api/login', loginRoute); //mount the loginRoutes at /api/login
-app.use('/api/profile', requireAuth, profileRoute); //mount the profileRoutes at /api/profile
-app.use('/api/logout', logoutRoute); //mount the logoutRoutes at /api/logout
-app.use('/api/refresh-token', refreshTokenRoute); //mount the refreshTokenRoutes at /api/refresh-token
-app.use('/api/admin', requireAuth, requireAdmin, adminRoute); //mount the adminRoutes at /api/admin
+// Mount organized route modules
+app.use('/api/auth', authRoutes);       // All auth endpoints: /api/auth/*
+app.use('/api/admin', adminRoutes);     // All admin endpoints: /api/admin/*
+app.use('/api/products', productRoutes); // All product endpoints: /api/products/*
+app.use('/api/categories', categoriesRoute); // All category endpoints: /api/categories/*
 
 app.get('/', (req, res) => {
   res.send('PradhanFresh backend is running 🥦');

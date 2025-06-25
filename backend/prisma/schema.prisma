@@ -15,16 +15,76 @@ datasource db {
 }
 
 model User {
-  id                     Int      @id @default(autoincrement())
+  id                     Int       @id @default(autoincrement())
   name                   String
-  email                  String   @unique
+  email                  String    @unique
   password               String
-  role                   Role     @default(USER)
-  isEmailVerified        Boolean  @default(false)
-  emailVerificationToken String?  @unique
-  passwordResetToken     String?  @unique
+  role                   Role      @default(USER)
+  isEmailVerified        Boolean   @default(false)
+  emailVerificationToken String?   @unique
+  passwordResetToken     String?   @unique
   passwordResetExpires   DateTime?
-  createdAt              DateTime @default(now())
+  createdAt              DateTime  @default(now())
+  
+  // Relationships
+  createdProducts        Product[] @relation("ProductCreator")
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  image       String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relationships
+  products    Product[]
+}
+
+model Product {
+  id              Int      @id @default(autoincrement())
+  name            String
+  slug            String   @unique
+  description     String
+  shortDescription String?
+  
+  // Pricing
+  price           Float
+  salePrice       Float?
+  
+  // Category relationship
+  category        Category @relation(fields: [categoryId], references: [id])
+  categoryId      Int
+  
+  // Media
+  images          String[] // Array of image URLs
+  thumbnail       String   // Main product image
+  
+  // Inventory
+  stock           Int      @default(0)
+  isAvailable     Boolean  @default(true)
+  sku             String   @unique
+  
+  // Product details
+  unit            String   @default("piece") // kg, gram, piece, liter, etc.
+  weight          Float?   // Weight in grams
+  
+  // Features
+  isFeatured      Boolean  @default(false)
+  isOrganic       Boolean  @default(false)
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       User     @relation("ProductCreator", fields: [createdById], references: [id])
+  createdById     Int
+  
+  @@index([categoryId])
+  @@index([isAvailable])
+  @@index([isFeatured])
 }
 
 enum Role {
