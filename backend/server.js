@@ -18,6 +18,7 @@ const allowedOrigins = [
   'http://127.0.0.1:5173',
   'http://localhost:5174', // Vite picks next free port if 5173 is occupied
   'http://127.0.0.1:5174',
+  'https://pradhanfresh.vercel.app', // Production frontend
 ];
 
 const corsOptions = {
@@ -25,10 +26,23 @@ const corsOptions = {
     // In dev tools like curl (no origin) allow
     if (!origin) return callback(null, true);
 
+    // Allow *.vercel.app (preview & production deployments)
+    if (origin.includes('.vercel.app')) {
+      return callback(null, true);
+    }
+
+    // In development, allow any localhost or 127.0.0.1 origin
+    if (process.env.NODE_ENV !== 'production') {
+      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        return callback(null, true);
+      }
+    }
+
     if (allowedOrigins.indexOf(origin) !== -1) {
       // Origin allowed
       callback(null, true);
     } else {
+      console.log('CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -55,6 +69,8 @@ const authRoutes = require('./routes/auth');           // All auth routes
 const adminRoutes = require('./routes/admin');         // All admin routes  
 const productRoutes = require('./routes/products');    // All product routes
 const categoriesRoute = require('./routes/products/categories'); // Categories routes
+const cartRoutes = require('./routes/cart');           // All cart routes
+const orderRoutes = require('./routes/orders');        // All order routes
 
 app.use(cookieParser());
 app.use(express.json()); // Read json data from request body
@@ -64,6 +80,8 @@ app.use('/api/auth', authRoutes);       // All auth endpoints: /api/auth/*
 app.use('/api/admin', adminRoutes);     // All admin endpoints: /api/admin/*
 app.use('/api/products', productRoutes); // All product endpoints: /api/products/*
 app.use('/api/categories', categoriesRoute); // All category endpoints: /api/categories/*
+app.use('/api/cart', cartRoutes);       // All cart endpoints: /api/cart/*
+app.use('/api/orders', orderRoutes);    // All order endpoints: /api/orders/*
 
 app.get('/', (req, res) => {
   res.send('PradhanFresh backend is running 🥦');

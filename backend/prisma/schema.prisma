@@ -28,6 +28,8 @@ model User {
   
   // Relationships
   createdProducts        Product[] @relation("ProductCreator")
+  cart                   Cart?     @relation("UserCart")
+  orders                 Order[]   @relation("UserOrders")
 }
 
 model Category {
@@ -82,12 +84,143 @@ model Product {
   createdBy       User     @relation("ProductCreator", fields: [createdById], references: [id])
   createdById     Int
   
+  // Relationships
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
+  
   @@index([categoryId])
   @@index([isAvailable])
   @@index([isFeatured])
 }
 
+model Cart {
+  id          Int        @id @default(autoincrement())
+  user        User       @relation("UserCart", fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int        @unique
+  items       CartItem[]
+  totalAmount Float      @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  expiresAt   DateTime?  // Cart expiry (24-48 hours)
+  
+  @@index([userId])
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cartId    Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId Int
+  quantity  Int      @default(1)
+  price     Float    // Price at the time of adding to cart
+  subtotal  Float    // quantity * price
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([cartId, productId]) // Prevent duplicate products in same cart
+  @@index([cartId])
+  @@index([productId])
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  orderNumber     String      @unique // Human-readable order number (e.g., "PF-2024-001")
+  
+  // User relationship
+  user            User        @relation("UserOrders", fields: [userId], references: [id], onDelete: Cascade)
+  userId          Int
+  
+  // Order details
+  items           OrderItem[]
+  status          OrderStatus @default(PENDING)
+  
+  // Pricing
+  subtotal        Float       // Sum of all item subtotals
+  deliveryFee     Float       @default(0)
+  tax             Float       @default(0)
+  discount        Float       @default(0)
+  totalAmount     Float       // Final amount after delivery, tax, discount
+  
+  // Delivery information
+  deliveryAddress Json        // Flexible address structure
+  deliveryDate    DateTime?   // Expected delivery date
+  deliverySlot    String?     // Morning, Afternoon, Evening
+  
+  // Payment information
+  paymentMethod   PaymentMethod @default(COD)
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentId       String?     // Payment gateway transaction ID
+  
+  // Order tracking
+  orderNotes      String?     // Special instructions from customer
+  adminNotes      String?     // Internal notes for admin
+  
+  // Timestamps
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  confirmedAt     DateTime?   // When order was confirmed
+  shippedAt       DateTime?   // When order was shipped
+  deliveredAt     DateTime?   // When order was delivered
+  cancelledAt     DateTime?   // When order was cancelled
+  
+  @@index([userId])
+  @@index([status])
+  @@index([orderNumber])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id          Int      @id @default(autoincrement())
+  
+  // Relationships
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId     Int
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId   Int
+  
+  // Item details (snapshot at time of order)
+  productName String   // Product name at time of order
+  productSku  String   // Product SKU at time of order
+  quantity    Int
+  price       Float    // Price per unit at time of order
+  subtotal    Float    // quantity * price
+  
+  // Product details at time of order
+  unit        String   // kg, gram, piece, liter, etc.
+  thumbnail   String?  // Product image at time of order
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([orderId])
+  @@index([productId])
+}
+
 enum Role {
   USER
   ADMIN
+}
+
+enum OrderStatus {
+  PENDING     // Order created, awaiting confirmation
+  CONFIRMED   // Order confirmed, preparing for shipment
+  PROCESSING  // Order being prepared/packed
+  SHIPPED     // Order shipped, on the way
+  DELIVERED   // Order delivered successfully
+  CANCELLED   // Order cancelled
+  RETURNED    // Order returned by customer
+}
+
+enum PaymentMethod {
+  COD         // Cash on Delivery
+  ONLINE      // Online payment (UPI, Card, Net Banking)
+  WALLET      // Digital wallet
+}
+
+enum PaymentStatus {
+  PENDING     // Payment not yet processed
+  COMPLETED   // Payment successful
+  FAILED      // Payment failed
+  REFUNDED    // Payment refunded
 }
