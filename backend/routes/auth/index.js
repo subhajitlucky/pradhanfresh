@@ -11,13 +11,14 @@ const refreshTokenRoute = require('./refreshToken');
 
 // Import middleware
 const requireAuth = require('../../middleware/requireAuth');
+const { authLimiter } = require('../../middleware/rateLimiter');
 
 // Mount auth routes
-router.use('/', authRoutes);           // /api/auth/*
-router.use('/signup', signupRoute);    // /api/auth/signup
-router.use('/login', loginRoute);      // /api/auth/login
+router.use('/', authLimiter, authRoutes);           // /api/auth/*
+router.use('/signup', authLimiter, signupRoute);    // /api/auth/signup
+router.use('/login', authLimiter, loginRoute);      // /api/auth/login
 router.use('/logout', logoutRoute);    // /api/auth/logout
 router.use('/profile', requireAuth, profileRoute);  // /api/auth/profile (protected)
-router.use('/refresh-token', refreshTokenRoute);    // /api/auth/refresh-token
+router.use('/refresh-token', authLimiter, refreshTokenRoute);    // /api/auth/refresh-token
 
 module.exports = router; 
