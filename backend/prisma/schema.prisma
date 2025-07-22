@@ -30,6 +30,29 @@ model User {
   createdProducts        Product[] @relation("ProductCreator")
   cart                   Cart?     @relation("UserCart")
   orders                 Order[]   @relation("UserOrders")
+  addresses              Address[] @relation("UserAddresses")
+}
+
+model Address {
+  id           Int      @id @default(autoincrement())
+  user         User     @relation("UserAddresses", fields: [userId], references: [id], onDelete: Cascade)
+  userId       Int
+  
+  fullName     String
+  phone        String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  pincode      String
+  landmark     String?
+  
+  isDefault    Boolean  @default(false)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@index([userId])
 }
 
 model Category {

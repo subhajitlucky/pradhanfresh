@@ -71,6 +71,7 @@ const productRoutes = require('./routes/products');    // All product routes
 const categoriesRoute = require('./routes/products/categories'); // Categories routes
 const cartRoutes = require('./routes/cart');           // All cart routes
 const orderRoutes = require('./routes/orders');        // All order routes
+const userRoutes = require('./routes/user');           // All user profile routes
 
 app.use(cookieParser());
 app.use(express.json()); // Read json data from request body
@@ -79,9 +80,10 @@ app.use(express.json()); // Read json data from request body
 app.use('/api/auth', authRoutes);       // All auth endpoints: /api/auth/*
 app.use('/api/admin', adminRoutes);     // All admin endpoints: /api/admin/*
 app.use('/api/products', productRoutes); // All product endpoints: /api/products/*
-app.use('/api/categories', categoriesRoute); // All category endpoints: /api/categories/*
+app.use('/api/categories', categoriesRoute); // All public category endpoints
 app.use('/api/cart', cartRoutes);       // All cart endpoints: /api/cart/*
 app.use('/api/orders', orderRoutes);    // All order endpoints: /api/orders/*
+app.use('/api/user', userRoutes);
 
 app.get('/', (req, res) => {
   res.send('PradhanFresh backend is running 🥦');
