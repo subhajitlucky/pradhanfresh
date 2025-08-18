@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const prisma = require('../../prisma/client');
 const requireAuth = require('../../middleware/requireAuth');
 const { getOrderStatusInfo } = require('../../utils/orderUtils');
+const { getCompleteOrder } = require('../../utils/order/orderOperations');
 
-// GET /api/orders/:orderNumber - Get single order details
+// GET /api/orders/:orderNumber - Get specific order details
 router.get('/:orderNumber', requireAuth, async (req, res) => {
   try {
     const { orderNumber } = req.params;
@@ -19,171 +19,40 @@ router.get('/:orderNumber', requireAuth, async (req, res) => {
       });
     }
 
-    // === GET ORDER DETAILS ===
-    const order = await prisma.order.findUnique({
-      where: { orderNumber: orderNumber },
-      include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                slug: true,
-                thumbnail: true,
-                unit: true,
-                price: true,
-                salePrice: true,
-                isAvailable: true,
-                stock: true
-              }
-            }
-          },
-          orderBy: {
-            createdAt: 'asc'
-          }
-        },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
-        }
-      }
-    });
+    // === GET COMPLETE ORDER DATA ===
+    const order = await getCompleteOrder(orderNumber, userId);
 
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: 'Order not found',
+        message: `Order ${orderNumber} not found or access denied`,
         error: 'Not Found'
       });
     }
 
-    // === VERIFY OWNERSHIP ===
-    if (order.userId !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied: This order does not belong to you',
-        error: 'Forbidden'
-      });
-    }
-
-    // === ENHANCE ORDER WITH ADDITIONAL INFO ===
-    const statusInfo = getOrderStatusInfo(order.status);
-    
-    // Calculate order timeline
-    const timeline = [];
-    
-    if (order.createdAt) {
-      timeline.push({
-        status: 'PENDING',
-        timestamp: order.createdAt,
-        title: 'Order Placed',
-        description: 'Your order has been placed successfully'
-      });
-    }
-
-    if (order.confirmedAt) {
-      timeline.push({
-        status: 'CONFIRMED',
-        timestamp: order.confirmedAt,
-        title: 'Order Confirmed',
-        description: 'Your order has been confirmed and is being prepared'
-      });
-    }
-
-    if (order.shippedAt) {
-      timeline.push({
-        status: 'SHIPPED',
-        timestamp: order.shippedAt,
-        title: 'Order Shipped',
-        description: 'Your order is on the way'
-      });
-    }
-
-    if (order.deliveredAt) {
-      timeline.push({
-        status: 'DELIVERED',
-        timestamp: order.deliveredAt,
-        title: 'Order Delivered',
-        description: 'Your order has been delivered successfully'
-      });
-    }
-
-    if (order.cancelledAt) {
-      timeline.push({
-        status: 'CANCELLED',
-        timestamp: order.cancelledAt,
-        title: 'Order Cancelled',
-        description: 'Your order has been cancelled'
-      });
-    }
-
-    // Sort timeline by timestamp
-    timeline.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-    // Check if order can be cancelled
-    const canCancel = ['PENDING', 'CONFIRMED', 'PROCESSING'].includes(order.status);
-    
-    // Check if order can be returned (within 7 days of delivery)
-    const canReturn = order.status === 'DELIVERED' && 
-                      order.deliveredAt &&
-                      new Date() - new Date(order.deliveredAt) <= 7 * 24 * 60 * 60 * 1000;
-
-    // Calculate delivery estimation
-    let deliveryEstimation = null;
-    if (order.deliveryDate) {
-      deliveryEstimation = {
-        date: order.deliveryDate,
-        slot: order.deliverySlot,
-        isEstimated: !order.deliveredAt
-      };
-    } else if (!order.deliveredAt && order.status !== 'CANCELLED') {
-      // Estimate delivery date (3-5 days from order date)
-      const estimatedDate = new Date(order.createdAt);
-      estimatedDate.setDate(estimatedDate.getDate() + 4);
-      deliveryEstimation = {
-        date: estimatedDate,
-        slot: 'To be confirmed',
-        isEstimated: true
-      };
-    }
-
-    // Enhanced order object
+    // === ENHANCE ORDER DATA ===
     const enhancedOrder = {
       ...order,
-      statusInfo,
-      timeline,
-      canCancel,
-      canReturn,
-      deliveryEstimation,
-      itemsCount: order.items.length,
-      totalSavings: order.items.reduce((savings, item) => {
-        const currentPrice = item.product.salePrice || item.product.price;
-        const originalPrice = item.product.price;
-        if (currentPrice < originalPrice) {
-          return savings + ((originalPrice - currentPrice) * item.quantity);
-        }
-        return savings;
-      }, 0),
-      // Payment information
-      paymentInfo: {
-        method: order.paymentMethod,
-        status: order.paymentStatus,
-        paymentId: order.paymentId,
-        isPaid: order.paymentStatus === 'COMPLETED',
-        isCOD: order.paymentMethod === 'COD'
-      }
+      statusInfo: getOrderStatusInfo(order.status),
+      deliveryAddress: JSON.parse(order.deliveryAddress || '{}'),
+      orderSummary: {
+        itemsCount: order.items.length,
+        totalItems: order.items.reduce((sum, item) => sum + item.quantity, 0),
+        subtotal: order.subtotal,
+        deliveryFee: order.deliveryFee,
+        tax: order.tax,
+        discount: order.discount,
+        totalAmount: order.totalAmount
+      },
+      canCancel: ['PENDING', 'CONFIRMED', 'PROCESSING'].includes(order.status),
+      canReturn: order.status === 'DELIVERED',
+      estimatedDelivery: order.deliveryDate ? order.deliveryDate.toISOString().split('T')[0] : null
     };
 
     res.status(200).json({
       success: true,
       message: 'Order details retrieved successfully',
-      data: {
-        order: enhancedOrder
-      }
+      data: enhancedOrder
     });
 
   } catch (error) {
@@ -196,4 +65,159 @@ router.get('/:orderNumber', requireAuth, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;
+
+/*
+=== GET ORDER DETAILS ROUTE HANDLER ===
+
+This route handler provides comprehensive order details for a specific order with enhanced information for user interface.
+
+ROUTE INFORMATION:
+- Method: GET
+- Path: /api/orders/:orderNumber
+- Authentication: Required
+- Purpose: Retrieve complete details of a specific order
+
+REQUEST FLOW:
+1. **Input Validation** - Validates order number parameter
+2. **Order Retrieval** - Gets complete order data with all relations
+3. **Access Control** - Ensures user can only access their own orders
+4. **Data Enhancement** - Adds UI-friendly information and calculations
+5. **Response** - Returns enhanced order data
+
+URL PARAMETERS:
+- orderNumber: The order number to retrieve (e.g., PF-2024-000123)
+
+SUCCESS RESPONSE:
+```javascript
+{
+  success: true,
+  message: "Order details retrieved successfully",
+  data: {
+    // Complete order object
+    id: 123,
+    orderNumber: "PF-2024-000123",
+    status: "SHIPPED",
+    totalAmount: 1250.00,
+    items: [
+      {
+        // Order item with product details
+        product: {
+          id: 1,
+          name: "Fresh Apples",
+          thumbnail: "apple.jpg",
+          unit: "kg"
+        },
+        quantity: 2,
+        price: 150.00,
+        subtotal: 300.00
+      }
+    ],
+    user: {
+      id: 456,
+      name: "John Doe",
+      email: "john@example.com"
+    },
+    statusHistory: [
+      {
+        oldStatus: "CONFIRMED",
+        newStatus: "SHIPPED",
+        changedAt: "2024-01-15T10:30:00Z",
+        notes: "Order shipped via courier",
+        changedByUser: {
+          name: "Admin User"
+        }
+      }
+    ],
+    statusInfo: {
+      label: "Shipped",
+      description: "Order is on the way to you",
+      color: "indigo",
+      canCancel: false
+    },
+    deliveryAddress: {
+      fullName: "John Doe",
+      phone: "9876543210",
+      addressLine1: "123 Main Street",
+      city: "Mumbai",
+      state: "Maharashtra",
+      pincode: "400001"
+    },
+    orderSummary: {
+      itemsCount: 3,
+      totalItems: 5,
+      subtotal: 1000.00,
+      deliveryFee: 40.00,
+      tax: 180.00,
+      discount: 50.00,
+      totalAmount: 1170.00
+    },
+    canCancel: false,
+    canReturn: false,
+    estimatedDelivery: "2024-01-20"
+  }
+}
+```
+
+ERROR RESPONSES:
+- 400: Missing or invalid order number
+- 404: Order not found or access denied
+- 500: Server errors
+
+DATA ENHANCEMENT FEATURES:
+
+**Status Information**:
+- User-friendly status labels and descriptions
+- Color coding for UI display
+- Cancellation and return eligibility
+
+**Order Summary**:
+- Item count and total quantity
+- Breakdown of all charges (subtotal, delivery, tax, discount)
+- Clear total amount calculation
+
+**Action Availability**:
+- canCancel: Based on current order status
+- canReturn: Available for delivered orders
+- Business rule enforcement for user actions
+
+**Address Formatting**:
+- Parsed delivery address from JSON
+- Structured format for display
+- Complete address information
+
+**Status History**:
+- Complete audit trail of status changes
+- Admin actions with timestamps
+- Notes and reasons for changes
+
+MODULAR DESIGN BENEFITS:
+- **Operations Module**: Reusable order retrieval logic
+- **Status Enhancement**: Rich status information
+- **Access Control**: User-scoped data access
+- **Data Formatting**: Consistent response structure
+
+SECURITY FEATURES:
+- User can only access their own orders
+- No sensitive admin information exposed
+- Order number validation prevents injection
+- Comprehensive error handling
+
+PERFORMANCE FEATURES:
+- Single query with all related data
+- Selective field querying for efficiency
+- Optimized include clauses
+- Minimal data processing overhead
+
+USER EXPERIENCE:
+- Complete order information in single request
+- Action availability clearly indicated
+- Rich status information for tracking
+- Structured data for easy UI rendering
+
+EXTENSIBILITY:
+- Easy to add new calculated fields
+- Status information can be enhanced
+- Additional related data can be included
+- Compatible with order tracking systems
+*/

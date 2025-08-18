@@ -1,140 +1,33 @@
 const express = require('express');
 const router = express.Router();
 const prisma = require('../../prisma/client');
+const { parseQueryParameters, validateQueryParameters, buildWhereClause, buildOrderByClause, buildPaginationMetadata, buildFilterMetadata } = require('../../utils/product/queryBuilder');
 
 // GET /api/products - Get all products with pagination, search, and filtering
 router.get('/', async (req, res) => {
   try {
-    // Parse pagination parameters with defaults
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 6; // Show 6 products per page
-    const skip = (page - 1) * limit;
-
-    // Parse search and filter parameters
-    const search = req.query.search || '';
-    const categoryIds = req.query.categories ? req.query.categories.split(',').map(id => parseInt(id)).filter(id => !isNaN(id)) : [];
-    const minPrice = req.query.minPrice ? parseFloat(req.query.minPrice) : null;
-    const maxPrice = req.query.maxPrice ? parseFloat(req.query.maxPrice) : null;
-    const sortBy = req.query.sortBy || 'createdAt'; // createdAt, name, price
-    const sortOrder = req.query.sortOrder || 'desc'; // asc, desc
-    const isOrganic = req.query.isOrganic === 'true' ? true : req.query.isOrganic === 'false' ? false : null;
-    const isFeatured = req.query.isFeatured === 'true' ? true : req.query.isFeatured === 'false' ? false : null;
-    const isAvailable = req.query.isAvailable === 'false' ? false : true; // Default to available products
-
-    // Validate pagination parameters
-    if (page < 1) {
-      return res.status(400).json({
-        success: false,
-        message: 'Page number must be greater than 0'
-      });
-    }
-
-    if (limit < 1 || limit > 50) {
-      return res.status(400).json({
-        success: false,
-        message: 'Limit must be between 1 and 50'
-      });
-    }
-
-    // Validate sort parameters
-    const validSortFields = ['createdAt', 'name', 'price'];
-    const validSortOrders = ['asc', 'desc'];
+    // === PARSE QUERY PARAMETERS ===
+    const params = parseQueryParameters(req.query);
     
-    if (!validSortFields.includes(sortBy)) {
+    // === VALIDATE PARAMETERS ===
+    const validation = validateQueryParameters(params);
+    if (!validation.valid) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid sortBy field. Must be one of: createdAt, name, price'
+        message: validation.message
       });
     }
 
-    if (!validSortOrders.includes(sortOrder)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid sortOrder. Must be asc or desc'
-      });
-    }
+    // === BUILD DATABASE QUERY COMPONENTS ===
+    const whereClause = buildWhereClause(params.filters);
+    const orderBy = buildOrderByClause(params.sorting.sortBy, params.sorting.sortOrder);
 
-    // Build where clause for filtering
-    const whereClause = {
-      isAvailable: isAvailable,
-    };
-
-    // Add search functionality
-    if (search.trim()) {
-      whereClause.OR = [
-        {
-          name: {
-            contains: search.trim(),
-            mode: 'insensitive'
-          }
-        },
-        {
-          description: {
-            contains: search.trim(),
-            mode: 'insensitive'
-          }
-        },
-        {
-          shortDescription: {
-            contains: search.trim(),
-            mode: 'insensitive'
-          }
-        },
-        {
-          category: {
-            name: {
-              contains: search.trim(),
-              mode: 'insensitive'
-            }
-          }
-        }
-      ];
-    }
-
-    // Add category filtering
-    if (categoryIds.length > 0) {
-      whereClause.categoryId = {
-        in: categoryIds
-      };
-    }
-
-    // Add price range filtering
-    if (minPrice !== null || maxPrice !== null) {
-      whereClause.price = {};
-      if (minPrice !== null) {
-        whereClause.price.gte = minPrice;
-      }
-      if (maxPrice !== null) {
-        whereClause.price.lte = maxPrice;
-      }
-    }
-
-    // Add organic filter
-    if (isOrganic !== null) {
-      whereClause.isOrganic = isOrganic;
-    }
-
-    // Add featured filter
-    if (isFeatured !== null) {
-      whereClause.isFeatured = isFeatured;
-    }
-
-    // Build orderBy clause
-    let orderBy = {};
-    if (sortBy === 'createdAt') {
-      orderBy.createdAt = sortOrder;
-    } else if (sortBy === 'name') {
-      orderBy.name = sortOrder;
-    } else if (sortBy === 'price') {
-      orderBy.price = sortOrder;
-    }
-
-    // Get total count for pagination metadata (with filters applied)
+    // === GET TOTAL COUNT FOR PAGINATION ===
     const totalProducts = await prisma.product.count({
       where: whereClause
     });
 
-    // Fetch filtered and paginated products
+    // === FETCH FILTERED AND PAGINATED PRODUCTS ===
     const products = await prisma.product.findMany({
       where: whereClause,
       include: {
@@ -148,43 +41,20 @@ router.get('/', async (req, res) => {
         }
       },
       orderBy: orderBy,
-      skip: skip,
-      take: limit
+      skip: params.pagination.skip,
+      take: params.pagination.limit
     });
 
-    // Calculate pagination metadata
-    const totalPages = Math.ceil(totalProducts / limit);
-    const hasNextPage = page < totalPages;
-    const hasPrevPage = page > 1;
+    // === BUILD RESPONSE METADATA ===
+    const paginationMetadata = buildPaginationMetadata(totalProducts, params.pagination);
+    const filterMetadata = buildFilterMetadata(params.filters, params.sorting, totalProducts);
 
-    // Get filter metadata for frontend
-    const filterMetadata = {
-      totalResults: totalProducts,
-      appliedFilters: {
-        search: search || null,
-        categories: categoryIds.length > 0 ? categoryIds : null,
-        priceRange: (minPrice !== null || maxPrice !== null) ? { min: minPrice, max: maxPrice } : null,
-        isOrganic: isOrganic,
-        isFeatured: isFeatured,
-        sortBy: sortBy,
-        sortOrder: sortOrder
-      }
-    };
-
+    // === RETURN SUCCESS RESPONSE ===
     res.status(200).json({
       success: true,
       message: 'Products retrieved successfully',
       data: products,
-      pagination: {
-        currentPage: page,
-        totalPages: totalPages,
-        totalProducts: totalProducts,
-        productsPerPage: limit,
-        hasNextPage: hasNextPage,
-        hasPrevPage: hasPrevPage,
-        nextPage: hasNextPage ? page + 1 : null,
-        prevPage: hasPrevPage ? page - 1 : null
-      },
+      pagination: paginationMetadata,
       filters: filterMetadata
     });
 
@@ -199,4 +69,129 @@ router.get('/', async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;
+
+/*
+=== GET PRODUCTS ROUTE HANDLER ===
+
+This route handler provides comprehensive product listing with advanced filtering, searching, sorting, and pagination capabilities.
+
+ROUTE INFORMATION:
+- Method: GET
+- Path: /api/products
+- Authentication: Not required (public endpoint)
+- Purpose: Retrieve products with flexible filtering and pagination
+
+REQUEST FLOW:
+1. **Parameter Parsing** - Extracts and parses query parameters
+2. **Parameter Validation** - Validates pagination and sorting parameters
+3. **Query Building** - Constructs database query components
+4. **Count Query** - Gets total count for pagination metadata
+5. **Data Query** - Fetches filtered and paginated products
+6. **Metadata Generation** - Builds pagination and filter metadata
+7. **Response** - Returns products with comprehensive metadata
+
+QUERY PARAMETERS:
+
+**Pagination**:
+- page: Page number (default: 1, min: 1)
+- limit: Items per page (default: 6, min: 1, max: 50)
+
+**Search**:
+- search: Text search across name, description, and category name
+
+**Filtering**:
+- categories: Comma-separated category IDs (e.g., "1,2,3")
+- minPrice: Minimum price filter
+- maxPrice: Maximum price filter
+- isOrganic: "true" or "false" for organic products
+- isFeatured: "true" or "false" for featured products
+- isAvailable: "true" or "false" for product availability (default: "true")
+
+**Sorting**:
+- sortBy: Sort field (createdAt, name, price) - default: createdAt
+- sortOrder: Sort order (asc, desc) - default: desc
+
+SEARCH FUNCTIONALITY:
+Searches across multiple fields:
+- Product name (case-insensitive)
+- Product description (case-insensitive)
+- Product short description (case-insensitive)
+- Category name (case-insensitive)
+
+EXAMPLE REQUESTS:
+```
+GET /api/products?page=1&limit=12
+GET /api/products?search=apple&categories=1,2&sortBy=price&sortOrder=asc
+GET /api/products?minPrice=50&maxPrice=200&isOrganic=true
+GET /api/products?isFeatured=true&sortBy=name&sortOrder=asc
+```
+
+SUCCESS RESPONSE:
+```javascript
+{
+  success: true,
+  message: "Products retrieved successfully",
+  data: [
+    // Array of product objects with category and creator info
+  ],
+  pagination: {
+    currentPage: 1,
+    totalPages: 5,
+    totalProducts: 25,
+    productsPerPage: 6,
+    hasNextPage: true,
+    hasPrevPage: false,
+    nextPage: 2,
+    prevPage: null
+  },
+  filters: {
+    totalResults: 25,
+    appliedFilters: {
+      search: "apple",
+      categories: [1, 2],
+      priceRange: { min: 50, max: 200 },
+      isOrganic: true,
+      isFeatured: null,
+      sortBy: "price",
+      sortOrder: "asc"
+    }
+  }
+}
+```
+
+ERROR RESPONSES:
+- 400: Invalid parameters (negative page, invalid sort field, etc.)
+- 500: Server errors
+
+MODULAR DESIGN BENEFITS:
+- **Query Builder**: Reusable query construction logic
+- **Parameter Parsing**: Standardized parameter handling
+- **Validation**: Comprehensive parameter validation
+- **Metadata Building**: Consistent response structure
+- **Maintainability**: Clear separation of concerns
+
+PERFORMANCE FEATURES:
+- Efficient database queries with proper indexing assumptions
+- Pagination prevents excessive data loading
+- Count queries are optimized with filters
+- Related data (category, creator) loaded in single query
+
+FRONTEND INTEGRATION:
+- Comprehensive pagination metadata for UI components
+- Filter metadata shows applied filters for user feedback
+- Consistent response structure for easy state management
+- Support for all common e-commerce filtering patterns
+
+SECURITY CONSIDERATIONS:
+- Parameter validation prevents abuse
+- Pagination limits prevent excessive resource usage
+- No authentication required for public product browsing
+- Safe parameter parsing prevents injection attacks
+
+EXTENSIBILITY:
+- Easy to add new filter parameters
+- Sorting can be extended to additional fields
+- Search can include additional product fields
+- Compatible with caching and CDN strategies
+*/

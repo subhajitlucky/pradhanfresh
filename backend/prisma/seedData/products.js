@@ -1,0 +1,155 @@
+/**
+ * Product seed data for database initialization
+ * Contains production-ready product catalog with detailed information
+ */
+
+const productionProducts = [
+  {
+    name: 'Fresh Apples',
+    description: 'Crisp and sweet red apples from Kashmir orchards. Rich in fiber, vitamins, and antioxidants. Perfect for snacking or cooking.',
+    shortDescription: 'Premium quality Kashmiri apples',
+    price: 180.00,
+    salePrice: 150.00,
+    thumbnail: '/src/assets/images/apple.jpg',
+    images: ['/src/assets/images/apple.jpg', '/src/assets/images/apple-2.jpg'],
+    stock: 50,
+    sku: 'FRUIT-APPLE-KAS',
+    unit: 'kg',
+    weight: 1.0,
+    isFeatured: true,
+    isOrganic: false,
+    categorySlug: 'fruits'
+  },
+  {
+    name: 'Organic Bananas',
+    description: 'Naturally ripened organic bananas. Rich in potassium, vitamin B6, and natural sugars. Great for smoothies and snacks.',
+    shortDescription: 'Organic bananas rich in potassium',
+    price: 90.00,
+    salePrice: 70.00,
+    thumbnail: '/src/assets/images/banana.jpg',
+    images: ['/src/assets/images/banana.jpg'],
+    stock: 100,
+    sku: 'FRUIT-BANANA-ORG',
+    unit: 'dozen',
+    weight: 1.2,
+    isFeatured: true,
+    isOrganic: true,
+    categorySlug: 'fruits'
+  },
+  {
+    name: 'Fresh Oranges',
+    description: 'Juicy and vitamin C rich oranges. Perfect for fresh juice or eating. Boosts immunity and provides natural energy.',
+    shortDescription: 'Vitamin C rich fresh oranges',
+    price: 120.00,
+    salePrice: 100.00,
+    thumbnail: '/src/assets/images/orange.jpg',
+    images: ['/src/assets/images/orange.jpg'],
+    stock: 75,
+    sku: 'FRUIT-ORANGE-FRS',
+    unit: 'kg',
+    weight: 1.0,
+    isFeatured: false,
+    isOrganic: false,
+    categorySlug: 'fruits'
+  },
+  {
+    name: 'Organic Tomatoes',
+    description: 'Fresh organic tomatoes grown without pesticides. Rich in lycopene and vitamin C. Perfect for salads, cooking, and sauces.',
+    shortDescription: 'Pesticide-free organic tomatoes',
+    price: 80.00,
+    salePrice: 65.00,
+    thumbnail: '/src/assets/images/tomato.jpg',
+    images: ['/src/assets/images/tomato.jpg'],
+    stock: 60,
+    sku: 'VEG-TOMATO-ORG',
+    unit: 'kg',
+    weight: 1.0,
+    isFeatured: true,
+    isOrganic: true,
+    categorySlug: 'vegetables'
+  },
+  {
+    name: 'Fresh Onions',
+    description: 'Premium quality onions with strong flavor. Essential for Indian cooking. Rich in antioxidants and has anti-inflammatory properties.',
+    shortDescription: 'Premium quality cooking onions',
+    price: 45.00,
+    salePrice: 35.00,
+    thumbnail: '/src/assets/images/onion.jpg',
+    images: ['/src/assets/images/onion.jpg'],
+    stock: 120,
+    sku: 'VEG-ONION-FRS',
+    unit: 'kg',
+    weight: 1.0,
+    isFeatured: false,
+    isOrganic: false,
+    categorySlug: 'vegetables'
+  },
+  {
+    name: 'Fresh Potatoes',
+    description: 'High-quality potatoes perfect for all cooking methods. Rich in carbohydrates, potassium, and vitamin C. Versatile kitchen staple.',
+    shortDescription: 'Versatile cooking potatoes',
+    price: 40.00,
+    salePrice: 30.00,
+    thumbnail: '/src/assets/images/potato.jpg',
+    images: ['/src/assets/images/potato.jpg'],
+    stock: 200,
+    sku: 'VEG-POTATO-FRS',
+    unit: 'kg',
+    weight: 1.0,
+    isFeatured: false,
+    isOrganic: false,
+    categorySlug: 'vegetables'
+  },
+  {
+    name: 'Organic Spinach',
+    description: 'Fresh organic spinach leaves packed with iron, vitamins, and minerals. Perfect for curries, salads, and healthy smoothies.',
+    shortDescription: 'Iron-rich organic spinach leaves',
+    price: 50.00,
+    salePrice: 40.00,
+    thumbnail: '/src/assets/images/spinach.jpg',
+    images: ['/src/assets/images/spinach.jpg'],
+    stock: 40,
+    sku: 'LEAFY-SPINACH-ORG',
+    unit: 'bunch',
+    weight: 0.25,
+    isFeatured: true,
+    isOrganic: true,
+    categorySlug: 'leafy-greens'
+  },
+  {
+    name: 'Fresh Coriander',
+    description: 'Aromatic fresh coriander leaves for garnishing and flavoring. Rich in antioxidants and adds fresh taste to any dish.',
+    shortDescription: 'Fresh aromatic coriander leaves',
+    price: 30.00,
+    salePrice: 25.00,
+    thumbnail: '/src/assets/images/coriander.jpg',
+    images: ['/src/assets/images/coriander.jpg'],
+    stock: 80,
+    sku: 'LEAFY-CORIANDER-FRS',
+    unit: 'bunch',
+    weight: 0.1,
+    isFeatured: false,
+    isOrganic: false,
+    categorySlug: 'leafy-greens'
+  },
+  {
+    name: 'Organic Lettuce',
+    description: 'Crisp organic lettuce leaves perfect for salads and wraps. Low in calories, high in water content, and rich in vitamins.',
+    shortDescription: 'Crisp organic lettuce for salads',
+    price: 60.00,
+    salePrice: 50.00,
+    thumbnail: '/src/assets/images/lettuce.jpg',
+    images: ['/src/assets/images/lettuce.jpg'],
+    stock: 30,
+    sku: 'LEAFY-LETTUCE-ORG',
+    unit: 'piece',
+    weight: 0.3,
+    isFeatured: false,
+    isOrganic: true,
+    categorySlug: 'leafy-greens'
+  }
+];
+
+module.exports = {
+  productionProducts
+};

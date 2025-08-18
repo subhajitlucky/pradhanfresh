@@ -3,6 +3,9 @@ const router = express.Router();
 const prisma = require('../../prisma/client');
 const requireAuth = require('../../middleware/requireAuth');
 const requireAdmin = require('../../middleware/requireAdmin');
+const { validatePricing, validateCategory, validateStock, validateSKUUniqueness } = require('../../utils/product/validation');
+const { generateUniqueSlug } = require('../../utils/product/slug');
+const { prepareUpdateData } = require('../../utils/product/dataPreparation');
 
 // PUT /api/products/:id - Update existing product (Admin only)
 router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
@@ -40,180 +43,55 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
       });
     }
 
-    // === STEP 3: EXTRACT UPDATE DATA ===
-    const {
-      name,
-      description,
-      shortDescription,
-      price,
-      salePrice,
-      categoryId,
-      images,
-      thumbnail,
-      stock,
-      sku,
-      unit,
-      weight,
-      isFeatured,
-      isOrganic
-    } = req.body;
-
-    // === STEP 4: PREPARE UPDATE DATA (PARTIAL UPDATES ALLOWED) ===
-    const updateData = {};
-
-    // Handle name update (with slug regeneration if needed)
-    if (name !== undefined) {
-      updateData.name = name.trim();
-      
-      // Generate new slug if name changed
-      if (updateData.name !== existingProduct.name) {
-        const slug = updateData.name
-          .toLowerCase()
-          .replace(/[^a-z0-9 -]/g, '')
-          .replace(/\s+/g, '-')
-          .replace(/-+/g, '-')
-          .trim();
-
-        // Check if slug is unique (add number if not, but exclude current product)
-        let finalSlug = slug;
-        let slugCounter = 1;
-        while (true) {
-          const slugExists = await prisma.product.findUnique({ 
-            where: { slug: finalSlug } 
-          });
-          
-          // If slug doesn't exist or belongs to current product, we can use it
-          if (!slugExists || slugExists.id === productId) {
-            break;
-          }
-          
-          finalSlug = `${slug}-${slugCounter}`;
-          slugCounter++;
-        }
-        
-        updateData.slug = finalSlug;
-      }
-    }
-
-    // Handle other fields
-    if (description !== undefined) updateData.description = description.trim();
-    if (shortDescription !== undefined) updateData.shortDescription = shortDescription?.trim() || null;
-    if (thumbnail !== undefined) updateData.thumbnail = thumbnail.trim();
-    if (images !== undefined) updateData.images = Array.isArray(images) ? images : [thumbnail || existingProduct.thumbnail];
-    if (unit !== undefined) updateData.unit = unit.trim().toLowerCase();
-    if (weight !== undefined) updateData.weight = weight ? parseFloat(weight) : null;
-    if (isFeatured !== undefined) updateData.isFeatured = Boolean(isFeatured);
-    if (isOrganic !== undefined) updateData.isOrganic = Boolean(isOrganic);
-
-    // === STEP 5: VALIDATE NUMERIC FIELDS ===
+    // === STEP 3: VALIDATE UPDATE DATA ===
     
-    // Validate price if provided
-    if (price !== undefined) {
-      const parsedPrice = parseFloat(price);
-      if (isNaN(parsedPrice) || parsedPrice <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Price must be a positive number',
-          error: 'Validation Error'
-        });
-      }
-      updateData.price = parsedPrice;
-    }
-
-    // Validate sale price if provided
-    if (salePrice !== undefined) {
-      if (salePrice === null || salePrice === '') {
-        updateData.salePrice = null; // Allow clearing sale price
-      } else {
-        const parsedSalePrice = parseFloat(salePrice);
-        if (isNaN(parsedSalePrice) || parsedSalePrice <= 0) {
-          return res.status(400).json({
-            success: false,
-            message: 'Sale price must be a positive number',
-            error: 'Validation Error'
-          });
-        }
-        
-        // Check sale price vs regular price (use new price if provided, otherwise existing)
-        const currentPrice = updateData.price || existingProduct.price;
-        if (parsedSalePrice >= currentPrice) {
-          return res.status(400).json({
-            success: false,
-            message: 'Sale price must be less than regular price',
-            error: 'Validation Error'
-          });
-        }
-        
-        updateData.salePrice = parsedSalePrice;
+    // Validate pricing if provided
+    if (req.body.price !== undefined || req.body.salePrice !== undefined) {
+      const currentPrice = req.body.price !== undefined ? req.body.price : existingProduct.price;
+      const pricingCheck = validatePricing({ 
+        price: currentPrice, 
+        salePrice: req.body.salePrice 
+      });
+      if (!pricingCheck.valid) {
+        return res.status(400).json(pricingCheck);
       }
     }
 
     // Validate category if provided
-    if (categoryId !== undefined) {
-      const parsedCategoryId = parseInt(categoryId);
-      if (isNaN(parsedCategoryId)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Category ID must be a number',
-          error: 'Validation Error'
-        });
+    if (req.body.categoryId !== undefined) {
+      const categoryCheck = await validateCategory(req.body.categoryId);
+      if (!categoryCheck.valid) {
+        return res.status(400).json(categoryCheck);
       }
-
-      const categoryExists = await prisma.category.findUnique({
-        where: { id: parsedCategoryId }
-      });
-
-      if (!categoryExists) {
-        return res.status(400).json({
-          success: false,
-          message: `Category with ID ${parsedCategoryId} does not exist`,
-          error: 'Validation Error'
-        });
-      }
-
-      updateData.categoryId = parsedCategoryId;
     }
 
     // Validate stock if provided
-    if (stock !== undefined) {
-      const parsedStock = parseInt(stock);
-      if (isNaN(parsedStock) || parsedStock < 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Stock must be a non-negative number',
-          error: 'Validation Error'
-        });
+    if (req.body.stock !== undefined) {
+      const stockCheck = validateStock(req.body.stock);
+      if (!stockCheck.valid) {
+        return res.status(400).json(stockCheck);
       }
-      updateData.stock = parsedStock;
-      updateData.isAvailable = parsedStock > 0; // Auto-update availability
     }
 
-    // === STEP 6: VALIDATE SKU UNIQUENESS (IF CHANGING) ===
-    if (sku !== undefined) {
-      const normalizedSKU = sku.trim().toUpperCase();
-      
-      // Only check uniqueness if SKU is actually changing
-      if (normalizedSKU !== existingProduct.sku) {
-        const existingSKU = await prisma.product.findUnique({
-          where: { sku: normalizedSKU }
-        });
-
-        if (existingSKU) {
-          return res.status(409).json({
-            success: false,
-            message: `Product with SKU '${sku}' already exists`,
-            error: 'Conflict'
-          });
-        }
+    // Validate SKU uniqueness if changing
+    if (req.body.sku !== undefined) {
+      const skuCheck = await validateSKUUniqueness(req.body.sku, productId);
+      if (!skuCheck.valid) {
+        return res.status(409).json(skuCheck);
       }
-      
-      updateData.sku = normalizedSKU;
     }
 
-    // === STEP 7: UPDATE PRODUCT IN DATABASE ===
-    
+    // === STEP 4: GENERATE NEW SLUG IF NAME CHANGED ===
+    let newSlug = null;
+    if (req.body.name !== undefined && req.body.name.trim() !== existingProduct.name) {
+      newSlug = await generateUniqueSlug(req.body.name, productId);
+    }
+
+    // === STEP 5: PREPARE UPDATE DATA ===
+    const updateData = prepareUpdateData(req.body, existingProduct, newSlug);
+
     // Only proceed if there are actual changes
-    if (Object.keys(updateData).length === 0) {
+    if (Object.keys(updateData).length <= 1) { // <= 1 because updatedAt is always added
       return res.status(400).json({
         success: false,
         message: 'No valid fields provided for update',
@@ -221,9 +99,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
       });
     }
 
-    // Add updatedAt timestamp
-    updateData.updatedAt = new Date();
-
+    // === STEP 6: UPDATE PRODUCT IN DATABASE ===
     const updatedProduct = await prisma.product.update({
       where: { id: productId },
       data: updateData,
@@ -243,7 +119,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
       success: true,
       message: 'Product updated successfully',
       data: updatedProduct,
-      changedFields: Object.keys(updateData)
+      changedFields: Object.keys(updateData).filter(key => key !== 'updatedAt')
     });
 
   } catch (error) {
@@ -265,4 +141,107 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;
+
+/*
+=== UPDATE PRODUCT ROUTE HANDLER ===
+
+This route handler manages updates to existing products with comprehensive validation and data preparation.
+
+ROUTE INFORMATION:
+- Method: PUT
+- Path: /api/products/:id
+- Authentication: Required (Admin only)
+- Purpose: Update existing products in the system
+
+REQUEST FLOW:
+1. **Product ID Validation** - Ensures valid numeric product ID
+2. **Existence Check** - Verifies product exists in database
+3. **Field Validation** - Validates only provided fields (partial updates)
+4. **Business Logic Validation** - Checks constraints and uniqueness
+5. **Slug Generation** - Creates new slug if name changed
+6. **Data Preparation** - Formats update data maintaining existing values
+7. **Database Update** - Updates only changed fields
+8. **Response** - Returns updated product with change summary
+
+UPDATE CAPABILITIES:
+- **Partial Updates**: Only provided fields are updated
+- **Name Changes**: Automatically generates new slug when name changes
+- **Price Updates**: Validates pricing relationships
+- **Stock Updates**: Automatically updates availability status
+- **Category Changes**: Validates new category exists
+- **SKU Changes**: Ensures new SKU is unique
+
+VALIDATION STRATEGY:
+- Only validates fields that are actually being updated
+- Maintains existing values for unchanged fields
+- Preserves data integrity through business rule enforcement
+- Handles special cases like clearing sale prices
+
+SUPPORTED UPDATES:
+- name: Product name (triggers slug regeneration)
+- description: Product description
+- shortDescription: Brief description (can be cleared)
+- price: Regular price
+- salePrice: Sale price (can be cleared by setting to null/empty)
+- categoryId: Product category
+- images: Product images array
+- thumbnail: Main product image
+- stock: Stock quantity (auto-updates availability)
+- sku: Product SKU (must remain unique)
+- unit: Product unit
+- weight: Product weight (can be cleared)
+- isFeatured: Featured status
+- isOrganic: Organic certification status
+
+BUSINESS RULES:
+- Sale price must be less than regular price (if both provided)
+- New SKUs must be unique across all products
+- Category must exist before assignment
+- Stock changes automatically update availability
+- Name changes trigger slug regeneration
+- All text fields are normalized and trimmed
+
+SUCCESS RESPONSE:
+```javascript
+{
+  success: true,
+  message: "Product updated successfully",
+  data: {
+    // Complete updated product object
+  },
+  changedFields: ["name", "price", "stock"] // List of fields that were changed
+}
+```
+
+ERROR RESPONSES:
+- 400: Invalid product ID, validation errors, no changes provided
+- 404: Product not found
+- 409: Conflict errors (duplicate SKU)
+- 500: Server errors
+
+MODULAR DESIGN BENEFITS:
+- **Validation Modules**: Reusable validation logic
+- **Data Preparation**: Handles complex update logic
+- **Slug Management**: Consistent URL generation
+- **Error Handling**: Comprehensive error coverage
+- **Change Tracking**: Reports what fields were modified
+
+PERFORMANCE OPTIMIZATIONS:
+- Only validates fields being updated
+- Single database query for existence check
+- Efficient slug uniqueness checking with exclusion
+- Minimal database updates (only changed fields)
+
+SECURITY FEATURES:
+- Admin-only access through middleware
+- Input validation prevents malicious data
+- Constraint enforcement through business rules
+- Audit trail through timestamps
+
+EXTENSIBILITY:
+- Easy to add new updatable fields
+- Validation rules can be extended per field
+- Support for additional business logic
+- Compatible with workflow and approval systems
+*/

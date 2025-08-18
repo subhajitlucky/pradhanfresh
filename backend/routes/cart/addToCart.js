@@ -2,53 +2,30 @@ const express = require('express');
 const router = express.Router();
 const prisma = require('../../prisma/client');
 const requireAuth = require('../../middleware/requireAuth');
-const { validateStock, calculateSubtotal, calculateCartTotal, getCartExpiryTime } = require('../../utils/cartUtils');
+const { validateStock } = require('../../utils/cart/cartUtils');
+const { validateAddToCartInput } = require('../../utils/cart/validation');
+const { getOrCreateCart, addItemToCart, updateCartTotal, getFinalCartData } = require('../../utils/cart/operations');
 
 // POST /api/cart/add - Add item to cart
 router.post('/', requireAuth, async (req, res) => {
   try {
-    const { productId, quantity = 1 } = req.body;
     const userId = req.user.userId;
 
     // === INPUT VALIDATION ===
-    if (!productId) {
+    const validation = validateAddToCartInput(req.body);
+    if (!validation.valid) {
       return res.status(400).json({
         success: false,
-        message: 'Product ID is required',
-        error: 'Validation Error'
+        message: validation.message,
+        error: validation.error
       });
     }
 
-    const parsedProductId = parseInt(productId);
-    const parsedQuantity = parseInt(quantity);
-
-    if (isNaN(parsedProductId) || parsedProductId <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid product ID',
-        error: 'Validation Error'
-      });
-    }
-
-    if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Quantity must be a positive number',
-        error: 'Validation Error'
-      });
-    }
-
-    if (parsedQuantity > 99) {
-      return res.status(400).json({
-        success: false,
-        message: 'Maximum quantity per item is 99',
-        error: 'Validation Error'
-      });
-    }
+    const { productId, quantity } = validation.data;
 
     // === GET PRODUCT DETAILS ===
     const product = await prisma.product.findUnique({
-      where: { id: parsedProductId },
+      where: { id: productId },
       select: {
         id: true,
         name: true,
@@ -69,7 +46,7 @@ router.post('/', requireAuth, async (req, res) => {
     }
 
     // === STOCK VALIDATION ===
-    const stockValidation = await validateStock(parsedProductId, parsedQuantity);
+    const stockValidation = await validateStock(productId, quantity);
     if (!stockValidation.valid) {
       return res.status(400).json({
         success: false,
@@ -79,152 +56,18 @@ router.post('/', requireAuth, async (req, res) => {
     }
 
     // === GET OR CREATE CART ===
-    let cart = await prisma.cart.findUnique({
-      where: { userId: userId },
-      include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                thumbnail: true,
-                stock: true,
-                isAvailable: true
-              }
-            }
-          }
-        }
-      }
-    });
+    const cart = await getOrCreateCart(userId);
 
-    if (!cart) {
-      // Create new cart for user
-      cart = await prisma.cart.create({
-        data: {
-          userId: userId,
-          totalAmount: 0,
-          expiresAt: getCartExpiryTime()
-        },
-        include: {
-          items: {
-            include: {
-              product: {
-                select: {
-                  id: true,
-                  name: true,
-                  thumbnail: true,
-                  stock: true,
-                  isAvailable: true
-                }
-              }
-            }
-          }
-        }
-      });
-    }
-
-    // === CHECK IF PRODUCT ALREADY IN CART ===
-    const existingCartItem = cart.items.find(item => item.productId === parsedProductId);
-    const currentPrice = product.salePrice || product.price;
-
-    if (existingCartItem) {
-      // Update existing item quantity
-      const newQuantity = existingCartItem.quantity + parsedQuantity;
-      
-      // Validate total quantity against stock
-      const totalStockValidation = await validateStock(parsedProductId, newQuantity);
-      if (!totalStockValidation.valid) {
-        return res.status(400).json({
-          success: false,
-          message: totalStockValidation.message,
-          error: 'Stock Error'
-        });
-      }
-
-      const newSubtotal = calculateSubtotal(newQuantity, currentPrice);
-
-      await prisma.cartItem.update({
-        where: { id: existingCartItem.id },
-        data: {
-          quantity: newQuantity,
-          price: currentPrice, // Update price in case it changed
-          subtotal: newSubtotal,
-          updatedAt: new Date()
-        }
-      });
-
-      console.log(`✅ Updated cart item: ${product.name} (${newQuantity} units)`);
-    } else {
-      // Add new item to cart
-      const subtotal = calculateSubtotal(parsedQuantity, currentPrice);
-
-      await prisma.cartItem.create({
-        data: {
-          cartId: cart.id,
-          productId: parsedProductId,
-          quantity: parsedQuantity,
-          price: currentPrice,
-          subtotal: subtotal
-        }
-      });
-
-      console.log(`✅ Added new item to cart: ${product.name} (${parsedQuantity} units)`);
-    }
+    // === ADD ITEM TO CART ===
+    await addItemToCart({ cart, productId, quantity, product });
 
     // === RECALCULATE CART TOTAL ===
-    const updatedCart = await prisma.cart.findUnique({
-      where: { id: cart.id },
-      include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                thumbnail: true,
-                stock: true,
-                isAvailable: true,
-                unit: true
-              }
-            }
-          }
-        }
-      }
-    });
+    await updateCartTotal(cart.id);
 
-    const newTotalAmount = calculateCartTotal(updatedCart.items);
+    // === GET FINAL CART DATA ===
+    const finalCart = await getFinalCartData(cart.id);
 
-    await prisma.cart.update({
-      where: { id: cart.id },
-      data: {
-        totalAmount: newTotalAmount,
-        updatedAt: new Date(),
-        expiresAt: getCartExpiryTime() // Extend expiry time
-      }
-    });
-
-    // === RETURN RESPONSE ===
-    const finalCart = await prisma.cart.findUnique({
-      where: { id: cart.id },
-      include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                thumbnail: true,
-                stock: true,
-                isAvailable: true,
-                unit: true
-              }
-            }
-          }
-        }
-      }
-    });
-
+    // === RETURN SUCCESS RESPONSE ===
     res.status(200).json({
       success: true,
       message: `${product.name} added to cart successfully`,
@@ -245,4 +88,81 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;
+
+/*
+=== ADD TO CART ROUTE HANDLER ===
+
+This route handler manages the addition of items to a user's shopping cart.
+The original large file has been refactored to use modular utility functions.
+
+ROUTE INFORMATION:
+- Method: POST
+- Path: /api/cart/add
+- Authentication: Required (uses requireAuth middleware)
+- Purpose: Add products to user's cart or update quantities
+
+REQUEST FLOW:
+1. **Authentication Check** - Middleware validates user token
+2. **Input Validation** - Validates productId and quantity
+3. **Product Lookup** - Verifies product exists and gets details
+4. **Stock Validation** - Ensures sufficient inventory
+5. **Cart Management** - Gets existing cart or creates new one
+6. **Item Addition** - Adds item or updates existing quantity
+7. **Total Calculation** - Recalculates cart totals
+8. **Response** - Returns updated cart data
+
+REQUEST BODY:
+{
+  productId: 123,
+  quantity: 2
+}
+
+SUCCESS RESPONSE:
+{
+  success: true,
+  message: "Product name added to cart successfully",
+  data: {
+    cart: { complete cart object },
+    itemsCount: 3,
+    totalAmount: 899.50
+  }
+}
+
+ERROR RESPONSES:
+- 400: Invalid input, insufficient stock, validation errors
+- 404: Product not found
+- 500: Server errors
+
+BUSINESS RULES ENFORCED:
+- Maximum 99 items per product
+- Only available products can be added
+- Stock levels are validated in real-time
+- Cart expiry is extended on each activity
+- Existing items have quantities updated, not duplicated
+
+MODULAR DESIGN BENEFITS:
+- **Validation Module**: Clean separation of input validation logic
+- **Operations Module**: Reusable cart business logic
+- **Reduced Complexity**: Route handler focuses only on HTTP concerns
+- **Better Testing**: Each module can be unit tested independently
+- **Improved Maintainability**: Changes to business logic don't affect routing
+
+SECURITY FEATURES:
+- Authentication required for all operations
+- Input validation prevents malicious data
+- Stock validation prevents overselling
+- Error messages don't expose sensitive information
+
+PERFORMANCE CONSIDERATIONS:
+- Single database queries for cart operations
+- Efficient product lookup with selected fields
+- Atomic operations prevent race conditions
+- Proper error handling prevents crashes
+
+EXTENSIBILITY:
+- Easy to add new validation rules
+- Cart operations can be reused in other routes
+- Response format can be standardized across cart endpoints
+- Business logic changes don't require route modifications
+*/

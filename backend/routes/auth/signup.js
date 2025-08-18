@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const prisma = require('../../prisma/client');
-const { sendVerificationEmail } = require('../../utils/email'); // Import our email function
+const { sendVerificationEmail } = require('../../utils/auth/email'); // Import our email function
 const router = express.Router();
 
 

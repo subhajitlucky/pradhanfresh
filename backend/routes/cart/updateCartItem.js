@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const prisma = require('../../prisma/client');
 const requireAuth = require('../../middleware/requireAuth');
-const { validateStock, calculateSubtotal, calculateCartTotal, getCartExpiryTime } = require('../../utils/cartUtils');
+const { validateStock, calculateSubtotal, calculateCartTotal, getCartExpiryTime } = require('../../utils/cart/cartUtils');
 
 // PUT /api/cart/:itemId - Update cart item quantity
 router.put('/:itemId', requireAuth, async (req, res) => {
