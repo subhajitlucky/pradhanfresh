@@ -1,12 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import logoImage from '@/assets/images/logo.jpg';
 
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { getCartItemsCount } = useCart();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -36,6 +38,15 @@ const Navbar = () => {
             <Link to="/about" className="nav-link">About Us</Link>
             <Link to="/products" className="nav-link">Products</Link>
             <Link to="/contact" className="nav-link">Contact</Link>
+            
+            {/* Cart Icon */}
+            <Link to="/cart" className="nav-link cart-link">
+              <span className="cart-icon">🛒</span>
+              {getCartItemsCount() > 0 && (
+                <span className="cart-badge">{getCartItemsCount()}</span>
+              )}
+            </Link>
+            
             {user ? (
               <>
                 <Link to="/profile" className="nav-link">Profile</Link>
@@ -78,6 +89,12 @@ const Navbar = () => {
           <Link to="/about" className="mobile-nav-link">About Us</Link>
           <Link to="/products" className="mobile-nav-link">Products</Link>
           <Link to="/contact" className="mobile-nav-link">Contact</Link>
+          
+          {/* Mobile Cart Link */}
+          <Link to="/cart" className="mobile-nav-link cart-link">
+            🛒 Cart {getCartItemsCount() > 0 && `(${getCartItemsCount()})`}
+          </Link>
+          
           {user ? (
             <>
               <Link to="/profile" className="mobile-nav-link">Profile</Link>

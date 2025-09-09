@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
+import { useCart } from '../../context/CartContext';
 import './../../styles/products/ProductDetail.css';
 
 // TypeScript interfaces matching backend API response
@@ -53,11 +54,16 @@ const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
+  // Cart context
+  const { addToCart, loading: cartLoading, isInCart, getCartItem } = useCart();
+  
   // Component state management
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
 
   // Fetch single product from backend API
   useEffect(() => {
@@ -126,6 +132,35 @@ const ProductDetail = () => {
   const goBack = () => {
     navigate('/products');
   };
+
+  // Handle add to cart
+  const handleAddToCart = async () => {
+    if (!product) return;
+    
+    setAddingToCart(true);
+    try {
+      const success = await addToCart(product.id, quantity);
+      if (success) {
+        // Show success feedback or navigate to cart
+        alert(`Added ${quantity} ${product.name} to cart!`);
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  // Handle quantity change
+  const handleQuantityChange = (newQuantity: number) => {
+    if (newQuantity >= 1 && (!product || newQuantity <= product.stock)) {
+      setQuantity(newQuantity);
+    }
+  };
+
+  // Check if product is already in cart
+  const cartItem = product ? getCartItem(product.id) : null;
+  const isProductInCart = product ? isInCart(product.id) : false;
 
   // Component render logic
   return (
@@ -249,17 +284,65 @@ const ProductDetail = () => {
               </div>
             </div>
 
+            {/* Quantity Selector */}
+            {product.isAvailable && product.stock > 0 && (
+              <div className="quantity-section">
+                <h3>Quantity</h3>
+                <div className="quantity-controls">
+                  <button 
+                    onClick={() => handleQuantityChange(quantity - 1)}
+                    disabled={quantity <= 1}
+                    className="quantity-btn decrease"
+                  >
+                    -
+                  </button>
+                  <span className="quantity-display">{quantity}</span>
+                  <button 
+                    onClick={() => handleQuantityChange(quantity + 1)}
+                    disabled={quantity >= product.stock}
+                    className="quantity-btn increase"
+                  >
+                    +
+                  </button>
+                </div>
+                <span className="quantity-note">
+                  {product.stock} available
+                </span>
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="product-actions">
-              <button 
-                className={`add-to-cart-button ${!product.isAvailable ? 'disabled' : ''}`}
-                disabled={!product.isAvailable}
-              >
-                {product.isAvailable ? 'Add to Cart' : 'Out of Stock'}
-              </button>
-              <button className="wishlist-button">
-                Add to Wishlist
-              </button>
+              {product.isAvailable && product.stock > 0 ? (
+                <>
+                  <button 
+                    onClick={handleAddToCart}
+                    disabled={addingToCart}
+                    className="add-to-cart-button"
+                  >
+                    {addingToCart ? (
+                      <>
+                        <span className="loading-spinner small"></span>
+                        Adding...
+                      </>
+                    ) : isProductInCart ? (
+                      `Update Cart (${cartItem?.quantity} in cart)`
+                    ) : (
+                      'Add to Cart'
+                    )}
+                  </button>
+                  <button 
+                    onClick={() => navigate('/cart')}
+                    className="view-cart-button"
+                  >
+                    View Cart
+                  </button>
+                </>
+              ) : (
+                <button className="add-to-cart-button disabled" disabled>
+                  {product.stock === 0 ? 'Out of Stock' : 'Not Available'}
+                </button>
+              )}
             </div>
 
             {/* Product Meta Information */}
