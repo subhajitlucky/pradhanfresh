@@ -8,10 +8,10 @@ const prisma = require('../../prisma/client');
 const generateSlug = (name) => {
   return name
     .toLowerCase()
-    .replace(/[^a-z0-9 -]/g, '') // Remove special characters
-    .replace(/\s+/g, '-')        // Replace spaces with hyphens
-    .replace(/-+/g, '-')         // Replace multiple hyphens with single
-    .trim();                     // Remove leading/trailing spaces
+    .trim()
+    .replace(/[^\w\s-]/g, '')    // Remove special characters but keep alphanumeric, space, underscore, hyphen
+    .replace(/[\s_-]+/g, '-')    // Replace spaces, underscores, and hyphens with single hyphen
+    .replace(/^-+|-+$/g, '');    // Remove leading/trailing hyphens
 };
 
 /**
