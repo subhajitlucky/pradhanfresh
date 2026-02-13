@@ -53,7 +53,7 @@ const AdminProductForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [imageInput, setImageInput] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   // Check admin access
   useEffect(() => {
@@ -133,20 +133,45 @@ const AdminProductForm = () => {
     }
   };
 
-  const handleAddImage = () => {
-    if (imageInput.trim() && !formData.images.includes(imageInput.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, imageInput.trim()]
-      }));
-      setImageInput('');
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      setError('');
+
+      const formDataUpload = new FormData();
+      formDataUpload.append('image', file);
+
+      const response = await api.post('/upload', formDataUpload, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.data.success) {
+        const imageUrl = response.data.data.url;
+        setFormData(prev => ({
+          ...prev,
+          thumbnail: prev.thumbnail || imageUrl,
+          images: [...prev.images, imageUrl]
+        }));
+      }
+    } catch (error: any) {
+      console.error('Upload failed:', error);
+      setError(error.response?.data?.message || 'Image upload failed');
+    } finally {
+      setUploading(false);
     }
   };
 
   const handleRemoveImage = (index: number) => {
+    const removedUrl = formData.images[index];
     setFormData(prev => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: prev.images.filter((_, i) => i !== index),
+      thumbnail: prev.thumbnail === removedUrl ? (prev.images.length > 1 ? prev.images.find(img => img !== removedUrl) || '' : '') : prev.thumbnail
     }));
   };
 
@@ -220,7 +245,7 @@ const AdminProductForm = () => {
       } else {
         setError(response.data.message || 'Failed to save product');
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error('Error saving product:', error);
       if (error.response?.data?.message) {
         setError(error.response.data.message);
@@ -447,52 +472,40 @@ const AdminProductForm = () => {
             <h3>Product Images</h3>
             
             <div className="admin-form-group">
-              <label htmlFor="thumbnail">Thumbnail Image URL *</label>
-              <input
-                type="url"
-                id="thumbnail"
-                name="thumbnail"
-                value={formData.thumbnail}
-                onChange={handleInputChange}
-                required
-                className="admin-form-input"
-                placeholder="https://example.com/image.jpg"
-              />
-            </div>
-
-            <div className="admin-form-group">
-              <label>Additional Images</label>
-              <div className="admin-image-input">
+              <label>Upload Product Image</label>
+              <div className="admin-file-input-wrapper">
                 <input
-                  type="url"
-                  value={imageInput}
-                  onChange={(e) => setImageInput(e.target.value)}
-                  className="admin-form-input"
-                  placeholder="https://example.com/image.jpg"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                  className="admin-file-input"
+                  id="image-upload"
                 />
-                <button
-                  type="button"
-                  onClick={handleAddImage}
-                  className="admin-add-image-btn"
-                >
-                  Add Image
-                </button>
+                <label htmlFor="image-upload" className={`admin-file-label ${uploading ? 'disabled' : ''}`}>
+                  {uploading ? 'Uploading...' : 'Choose File'}
+                </label>
+                {uploading && <div className="admin-upload-spinner"></div>}
               </div>
+              <p className="admin-form-help">Max file size: 5MB. Formats: JPG, PNG, WEBP.</p>
             </div>
 
             {formData.images.length > 0 && (
               <div className="admin-images-list">
                 {formData.images.map((image, index) => (
                   <div key={index} className="admin-image-item">
-                    <img src={image} alt={`Product ${index + 1}`} />
+                    <img 
+                      src={image.startsWith('http') ? image : `http://localhost:5000${image}`} 
+                      alt={`Product ${index + 1}`} 
+                    />
                     <div className="admin-image-actions">
                       <button
                         type="button"
                         onClick={() => handleSetThumbnail(image)}
-                        className="admin-btn-small primary"
+                        className={`admin-btn-small ${formData.thumbnail === image ? 'success' : 'primary'}`}
                         disabled={image === formData.thumbnail}
                       >
-                        {image === formData.thumbnail ? 'Thumbnail' : 'Set as Thumbnail'}
+                        {image === formData.thumbnail ? 'Thumbnail ✓' : 'Set as Thumbnail'}
                       </button>
                       <button
                         type="button"
@@ -505,6 +518,10 @@ const AdminProductForm = () => {
                   </div>
                 ))}
               </div>
+            )}
+            
+            {!formData.thumbnail && (
+              <p className="admin-error-text">Please upload at least one image and set it as thumbnail.</p>
             )}
           </div>
 
@@ -550,7 +567,7 @@ const AdminProductForm = () => {
           </button>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || uploading}
             className="admin-action-btn primary"
           >
             {loading ? 'Saving...' : isEditing ? 'Update Product' : 'Create Product'}
@@ -561,4 +578,4 @@ const AdminProductForm = () => {
   );
 };
 
-export default AdminProductForm; 
+export default AdminProductForm;

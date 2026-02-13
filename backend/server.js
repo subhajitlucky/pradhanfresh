@@ -6,6 +6,9 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 
+// --- Static Files ---
+app.use('/uploads', express.static('uploads'));
+
 // --- Security Middleware ---
 
 // 1. Set security-related HTTP headers

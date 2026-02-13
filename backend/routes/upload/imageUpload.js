@@ -2,40 +2,33 @@ const express = require('express');
 const router = express.Router();
 const requireAuth = require('../../middleware/requireAuth');
 const requireAdmin = require('../../middleware/requireAdmin');
+const { upload, uploadImage } = require('../../utils/upload/imageHandler');
 
-// In production, you would use Cloudinary or S3.
-// For development/demo, we'll simulate the upload by returning the provided URL or a placeholder.
-router.post('/', requireAuth, requireAdmin, async (req, res) => {
+/**
+ * POST /api/upload/image
+ * Handles single product image upload
+ */
+router.post('/', requireAuth, requireAdmin, upload.single('image'), async (req, res) => {
   try {
-    // In a real scenario, you'd use multer and cloudinary/aws-sdk here.
-    // For now, we simulate a successful upload.
-    const { imageUrl } = req.body;
-    
-    if (!imageUrl) {
-        return res.status(400).json({
-            success: false,
-            message: 'No image data provided'
-        });
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No image file provided'
+      });
     }
 
-    // Simulate upload processing time
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const result = await uploadImage(req.file);
 
     res.status(200).json({
       success: true,
-      message: 'Image uploaded successfully (Dev Mode)',
-      data: {
-        url: imageUrl,
-        public_id: 'dev_' + Date.now(),
-        format: 'jpg',
-        created_at: new Date().toISOString()
-      }
+      message: 'Image uploaded successfully',
+      data: result
     });
   } catch (error) {
-    console.error('Upload error:', error);
+    console.error('Upload route error:', error);
     res.status(500).json({
       success: false,
-      message: 'Image upload failed'
+      message: error.message || 'Image upload failed'
     });
   }
 });
