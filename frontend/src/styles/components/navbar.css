@@ -94,14 +94,14 @@
 
 /* Admin Link Styling */
 .nav-link.admin-link {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, var(--color-secondary), #e68a00);
   color: white;
   border: 2px solid transparent;
   font-weight: var(--font-weight-semibold);
 }
 
 .nav-link.admin-link:hover {
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  background: linear-gradient(135deg, #e68a00, #cc7a00);
   color: white;
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
@@ -192,14 +192,14 @@
 
 /* Mobile Admin Link Styling */
 .mobile-nav-link.admin-link {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, var(--color-secondary), #e68a00);
   color: white;
   border: 2px solid transparent;
   font-weight: var(--font-weight-semibold);
 }
 
 .mobile-nav-link.admin-link:hover {
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  background: linear-gradient(135deg, #e68a00, #cc7a00);
   color: white;
 }
 
