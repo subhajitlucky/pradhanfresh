@@ -72,8 +72,13 @@ const categoriesRoute = require('./routes/products/categories'); // Categories r
 const cartRoutes = require('./routes/cart');           // All cart routes
 const orderRoutes = require('./routes/orders');        // All order routes
 const userRoutes = require('./routes/user');           // All user profile routes
+const uploadRoutes = require('./routes/upload/imageUpload');
+const stripeWebhook = require('./routes/webhooks/stripe');
 
 app.use(cookieParser());
+// Note: Webhook needs raw body, so we mount it before express.json() if needed, 
+// but our route handler handles it too.
+app.use('/api/webhooks/stripe', stripeWebhook);
 app.use(express.json()); // Read json data from request body
 
 // Mount organized route modules
@@ -84,6 +89,7 @@ app.use('/api/categories', categoriesRoute); // All public category endpoints
 app.use('/api/cart', cartRoutes);       // All cart endpoints: /api/cart/*
 app.use('/api/orders', orderRoutes);    // All order endpoints: /api/orders/*
 app.use('/api/user', userRoutes);
+app.use('/api/upload', uploadRoutes);
 
 app.get('/', (req, res) => {
   res.send('PradhanFresh backend is running 🥦');

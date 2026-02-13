@@ -6,6 +6,7 @@ const adminRoutes = require('./admin');
 const categoryRoutes = require('./categories');
 const userRoutes = require('./users');
 const dashboardRoutes = require('./dashboard');
+const inventoryRoutes = require('./inventory');
 
 // Import middleware
 const requireAuth = require('../../middleware/requireAuth');
@@ -19,5 +20,6 @@ router.use('/', adminRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/users', userRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/inventory', inventoryRoutes);
 
 module.exports = router; 

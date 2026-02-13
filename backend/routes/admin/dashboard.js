@@ -63,6 +63,20 @@ router.get('/stats', async (req, res) => {
       sales: item._sum.totalAmount,
     }));
 
+    // 6. Top Produce (Best selling products)
+    const topProduce = await prisma.orderItem.groupBy({
+      by: ['productId', 'productName'],
+      _sum: {
+        quantity: true,
+        subtotal: true
+      },
+      orderBy: {
+        _sum: {
+          quantity: 'desc'
+        }
+      },
+      take: 5
+    });
 
     res.status(200).json({
       success: true,
@@ -72,6 +86,7 @@ router.get('/stats', async (req, res) => {
         totalCustomers,
         recentOrders,
         salesData: formattedSalesData,
+        topProduce
       },
     });
   } catch (error) {
