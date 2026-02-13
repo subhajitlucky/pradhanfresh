@@ -2,13 +2,13 @@
 .filter-sidebar {
   width: 280px;
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-5);
+  box-shadow: var(--shadow-md);
   height: fit-content;
   position: sticky;
-  top: 20px;
+  top: 100px;
 }
 
 .filter-sidebar.loading {
@@ -20,28 +20,28 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: var(--spacing-6);
+  padding-bottom: var(--spacing-3);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .filter-header h3 {
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
 }
 
 .clear-filters-btn {
   background: none;
   border: none;
-  color: #ef4444;
-  font-size: 14px;
-  font-weight: 500;
+  color: var(--color-error);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
 }
 
 .clear-filters-btn:hover {
@@ -50,30 +50,32 @@
 
 /* Filter Sections */
 .filter-section {
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-6);
 }
 
 .filter-section h4 {
-  margin: 0 0 12px 0;
-  font-size: 16px;
-  font-weight: 500;
-  color: #374151;
+  margin: 0 0 var(--spacing-3) 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .filter-loading {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 0;
-  color: #6b7280;
-  font-size: 14px;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
 }
 
 .loading-spinner.small {
   width: 16px;
   height: 16px;
-  border: 2px solid #e5e7eb;
-  border-top-color: #10b981;
+  border: 2px solid var(--color-border-light);
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -82,14 +84,14 @@
 .filter-options {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-2);
 }
 
 .filter-option {
   display: flex;
   align-items: center;
   cursor: pointer;
-  padding: 8px 0;
+  padding: var(--spacing-2) 0;
   position: relative;
 }
 
@@ -105,23 +107,23 @@
   height: 18px;
   width: 18px;
   background-color: white;
-  border: 2px solid #d1d5db;
-  border-radius: 4px;
-  margin-right: 12px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  margin-right: var(--spacing-3);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
   flex-shrink: 0;
 }
 
 .filter-option:hover .checkmark {
-  border-color: #10b981;
+  border-color: var(--color-primary);
 }
 
 .filter-option input:checked ~ .checkmark {
-  background-color: #10b981;
-  border-color: #10b981;
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .filter-option input:checked ~ .checkmark::after {
@@ -135,36 +137,36 @@
 
 .option-label {
   flex: 1;
-  font-size: 14px;
-  color: #374151;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .product-count {
-  font-size: 12px;
-  color: #6b7280;
-  font-weight: 400;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-normal);
 }
 
 /* Price Range Inputs */
 .price-range-inputs {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-3);
 }
 
 .price-input-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--spacing-1);
 }
 
 .price-input-group label {
-  font-size: 13px;
-  color: #6b7280;
-  font-weight: 500;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
 }
 
 .price-input-container {
@@ -176,110 +178,110 @@
 .currency {
   position: absolute;
   left: 12px;
-  color: #6b7280;
-  font-size: 14px;
-  font-weight: 500;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   z-index: 1;
 }
 
 .price-input {
   width: 100%;
-  padding: 10px 12px 10px 28px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #374151;
+  padding: var(--spacing-2) var(--spacing-3) var(--spacing-2) var(--spacing-7);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
   background: white;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
 }
 
 .price-input:focus {
   outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(30, 96, 5, 0.1);
 }
 
 .price-input::placeholder {
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 
 /* Feature Filters */
 .feature-filter {
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-4);
 }
 
 .feature-filter label {
   display: block;
-  font-size: 13px;
-  color: #6b7280;
-  font-weight: 500;
-  margin-bottom: 8px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--spacing-2);
 }
 
 .feature-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--spacing-2);
 }
 
 .filter-btn {
-  padding: 6px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 20px;
+  padding: var(--spacing-1) var(--spacing-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
   background: white;
-  color: #374151;
-  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
   white-space: nowrap;
 }
 
 .filter-btn:hover {
-  border-color: #10b981;
-  color: #10b981;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .filter-btn.active {
-  background: #10b981;
-  border-color: #10b981;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
   color: white;
 }
 
 /* Active Filters */
 .active-filters {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid #e5e7eb;
+  margin-top: var(--spacing-5);
+  padding-top: var(--spacing-4);
+  border-top: 1px solid var(--color-border-light);
 }
 
 .active-filters h4 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  font-weight: 500;
-  color: #374151;
+  margin: 0 0 var(--spacing-3) 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
 }
 
 .filter-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--spacing-2);
 }
 
 .filter-tag {
   display: inline-flex;
   align-items: center;
-  background: #f3f4f6;
-  color: #374151;
-  padding: 4px 8px;
-  border-radius: 16px;
-  font-size: 12px;
-  gap: 6px;
+  background: var(--color-background-dark);
+  color: var(--color-text-primary);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  gap: var(--spacing-2);
 }
 
 .filter-tag button {
   background: none;
   border: none;
-  color: #6b7280;
+  color: var(--color-text-muted);
   cursor: pointer;
   padding: 0;
   display: flex;
@@ -288,12 +290,12 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
 }
 
 .filter-tag button:hover {
-  background: #d1d5db;
-  color: #374151;
+  background: var(--color-accent);
+  color: var(--color-primary);
 }
 
 /* Mobile Responsive */
@@ -301,29 +303,29 @@
   .filter-sidebar {
     width: 100%;
     position: static;
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-5);
   }
 }
 
 @media (max-width: 768px) {
   .filter-sidebar {
-    padding: 16px;
+    padding: var(--spacing-4);
   }
   
   .filter-header {
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-5);
   }
   
   .filter-section {
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-5);
   }
   
   .price-range-inputs {
     flex-direction: row;
-    gap: 8px;
+    gap: var(--spacing-2);
   }
   
   .price-input-group {
     flex: 1;
   }
-} 
+}
