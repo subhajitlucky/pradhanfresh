@@ -59,13 +59,13 @@ export const cartApi = {
     }
   },
 
-  // POST /api/cart - Add item to cart
+  // POST /api/cart/add - Add item to cart
   async addToCart(productId: number, quantity: number): Promise<ApiResponse<AddToCartResponse>> {
     try {
       const requestData = { productId, quantity };
       console.log('📦 Adding to cart:', requestData);
       
-      const response = await api.post('/cart', requestData);
+      const response = await api.post('/cart/add', requestData);
       console.log('✅ Add to cart response:', response.data);
       
       return response.data;
@@ -106,12 +106,12 @@ export const cartApi = {
     }
   },
 
-  // DELETE /api/cart - Clear entire cart
+  // DELETE /api/cart/clear - Clear entire cart
   async clearCart(): Promise<ApiResponse> {
     try {
       console.log('🧹 Clearing entire cart');
       
-      const response = await api.delete('/cart');
+      const response = await api.delete('/cart/clear');
       console.log('✅ Clear cart response:', response.data);
       
       return response.data;
