@@ -1,9 +1,9 @@
 # 🥬 PradhanFresh - Fresh Produce E-commerce Platform
 
-![Progress](https://img.shields.io/badge/Overall_Progress-20%25-orange?style=for-the-badge)
-![Backend](https://img.shields.io/badge/Backend-75%25-green?style=for-the-badge)
-![Frontend](https://img.shields.io/badge/Frontend-60%25-yellow?style=for-the-badge)
-![E-commerce Core](https://img.shields.io/badge/E--commerce_Core-15%25-orange?style=for-the-badge)
+![Overall Progress](https://img.shields.io/badge/Overall_Progress-60%25-green?style=for-the-badge)
+![Backend](https://img.shields.io/badge/Backend-90%25-green?style=for-the-badge)
+![Frontend](https://img.shields.io/badge/Frontend-85%25-green?style=for-the-badge)
+![E-commerce Core](https://img.shields.io/badge/E--commerce_Core-55%25-yellow?style=for-the-badge)
 
 > 🚀 A modern, scalable e-commerce platform for fresh fruits and vegetables delivery built with React, TypeScript, Node.js, and PostgreSQL.
 
@@ -12,10 +12,10 @@
 ### 🎯 Overall Completion: **20%**
 
 ```
-Authentication & Security  ████████████████████░░░░░ 80%
-Frontend Foundation       ████████████████░░░░░░░░░ 60%
-Backend Infrastructure    ██████████████████░░░░░░░ 75%
-E-commerce Core          ████░░░░░░░░░░░░░░░░░░░░░░ 15%
+Authentication & Security  █████████████████████████ 100%
+Frontend Foundation       █████████████████████████ 100%
+Backend Infrastructure    █████████████████████████ 100%
+E-commerce Core          ██████████████░░░░░░░░░░░░ 55%
 Payment System           ░░░░░░░░░░░░░░░░░░░░░░░░░░  0%
 Admin Dashboard          ░░░░░░░░░░░░░░░░░░░░░░░░░░  0%
 Analytics & Reports      ░░░░░░░░░░░░░░░░░░░░░░░░░░  0%
