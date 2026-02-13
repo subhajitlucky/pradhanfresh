@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const prisma = require('../../prisma/client');
-const { parseQueryParameters, validateQueryParameters, buildWhereClause, buildOrderByClause, buildPaginationMetadata, buildFilterMetadata } = require('../../utils/product/queryBuilder');
+const { parseQueryParameters, validateQueryParameters, buildWhereClause, buildOrderByClause, buildPaginationMetadata, buildFilterMetadata } = require('../../utils/product/queries/queryBuilder');
 
 // GET /api/products - Get all products with pagination, search, and filtering
 router.get('/', async (req, res) => {

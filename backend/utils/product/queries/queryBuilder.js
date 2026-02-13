@@ -9,84 +9,128 @@ const { calculatePagination, buildPaginationMeta } = require('./pagination');
 const { buildIncludeClause, buildSelectClause } = require('./includes');
 
 /**
- * Build complete product query with all options
- * @param {Object} queryParams - Query parameters from request
- * @param {Object} options - Additional query options
- * @returns {Object} Complete query configuration
- * 
- * Usage Examples:
- * 
- * // Basic product listing
- * const query = buildProductQuery({
- *   page: 1,
- *   limit: 12,
- *   search: 'organic',
- *   sortBy: 'price',
- *   sortOrder: 'asc'
- * });
- * 
- * // Admin product listing
- * const adminQuery = buildProductQuery({
- *   page: 1,
- *   limit: 20
- * }, {
- *   forAdmin: true,
- *   includeOrderItems: true
- * });
- * 
- * // Minimal product data for dropdowns
- * const minimalQuery = buildProductQuery({}, {
- *   minimal: true,
- *   includeCategory: false
- * });
+ * Parse query parameters from request
+ * @param {Object} query - Raw query from req.query
+ * @returns {Object} Parsed parameters
  */
-const buildProductQuery = (queryParams, options = {}) => {
+const parseQueryParameters = (query) => {
   const {
-    page,
-    limit,
-    search,
-    category,
-    categories,
+    page = 1,
+    limit = 6,
+    search = '',
+    categories = '',
     minPrice,
     maxPrice,
     isOrganic,
     isFeatured,
-    isAvailable,
-    sortBy,
-    sortOrder
-  } = queryParams;
+    isAvailable = 'true',
+    sortBy = 'createdAt',
+    sortOrder = 'desc'
+  } = query;
 
-  // Parse category filters
-  let categoryIds = [];
-  if (category) {
-    categoryIds = Array.isArray(category) ? category : [category];
-  }
-  if (categories) {
-    const additionalCategories = Array.isArray(categories) ? categories : [categories];
-    categoryIds = [...categoryIds, ...additionalCategories];
+  // Parse categories from comma-separated string to array of numbers
+  const categoryIds = categories
+    ? categories.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
+    : [];
+
+  return {
+    pagination: {
+      page: parseInt(page),
+      limit: parseInt(limit)
+    },
+    filters: {
+      search: search.toString(),
+      categoryIds,
+      minPrice: minPrice ? parseFloat(minPrice) : undefined,
+      maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
+      isOrganic: isOrganic !== undefined ? isOrganic === 'true' : undefined,
+      isFeatured: isFeatured !== undefined ? isFeatured === 'true' : undefined,
+      isAvailable: isAvailable === 'false' ? false : true
+    },
+    sorting: {
+      sortBy: sortBy.toString(),
+      sortOrder: sortOrder.toString()
+    }
+  };
+};
+
+/**
+ * Validate parsed query parameters
+ * @param {Object} params - Parsed parameters
+ * @returns {Object} Validation result
+ */
+const validateQueryParameters = (params) => {
+  const { page, limit } = params.pagination;
+  
+  if (isNaN(page) || page < 1) {
+    return { valid: false, message: 'Page must be a positive integer' };
   }
   
-  // Remove duplicates and convert to integers
-  categoryIds = [...new Set(categoryIds)].map(id => parseInt(id)).filter(id => !isNaN(id));
+  if (isNaN(limit) || limit < 1) {
+    return { valid: false, message: 'Limit must be a positive integer' };
+  }
 
-  // Build pagination
-  const pagination = calculatePagination(page, limit);
+  return { valid: true };
+};
 
-  // Build filters
-  const whereClause = buildWhereClause({
-    search,
-    categoryIds,
-    minPrice: minPrice ? parseFloat(minPrice) : undefined,
-    maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
-    isOrganic: isOrganic !== undefined ? isOrganic === 'true' : undefined,
-    isFeatured: isFeatured !== undefined ? isFeatured === 'true' : undefined,
-    isAvailable: isAvailable !== undefined ? isAvailable === 'true' : true
-  });
+/**
+ * Build pagination metadata for response
+ * @param {number} totalProducts - Total number of products found
+ * @param {Object} paginationParams - Pagination parameters (page, limit)
+ * @returns {Object} Pagination metadata
+ */
+const buildPaginationMetadata = (totalProducts, paginationParams) => {
+  const { page, limit } = paginationParams;
+  const totalPages = Math.ceil(totalProducts / limit);
+  
+  return {
+    currentPage: page,
+    totalPages,
+    totalProducts,
+    productsPerPage: limit,
+    hasNextPage: page < totalPages,
+    hasPrevPage: page > 1,
+    nextPage: page < totalPages ? page + 1 : null,
+    prevPage: page > 1 ? page - 1 : null
+  };
+};
 
-  // Build sorting
-  const orderBy = buildOrderByClause(sortBy, sortOrder);
+/**
+ * Build filter metadata for response
+ * @param {Object} filters - Applied filters
+ * @param {Object} sorting - Applied sorting
+ * @param {number} totalResults - Total results found
+ * @returns {Object} Filter metadata
+ */
+const buildFilterMetadata = (filters, sorting, totalResults) => {
+  return {
+    totalResults,
+    appliedFilters: {
+      search: filters.search || null,
+      categories: filters.categoryIds.length > 0 ? filters.categoryIds : null,
+      priceRange: {
+        min: filters.minPrice !== undefined ? filters.minPrice : null,
+        max: filters.maxPrice !== undefined ? filters.maxPrice : null
+      },
+      isOrganic: filters.isOrganic !== undefined ? filters.isOrganic : null,
+      isFeatured: filters.isFeatured !== undefined ? filters.isFeatured : null,
+      sortBy: sorting.sortBy,
+      sortOrder: sorting.sortOrder
+    }
+  };
+};
 
-  // Build field selection and includes
+/**
+ * Build complete product query with all options
+ * @param {Object} queryParams - Query parameters from request
+ * @param {Object} options - Additional query options
+ * @returns {Object} Complete query configuration
+ */
+const buildProductQuery = (queryParams, options = {}) => {
+  const params = parseQueryParameters(queryParams);
+  const pagination = calculatePagination(params.pagination.page, params.pagination.limit);
+  const whereClause = buildWhereClause(params.filters);
+  const orderBy = buildOrderByClause(params.sorting.sortBy, params.sorting.sortOrder);
   const includeClause = buildIncludeClause(options);
   const selectClause = buildSelectClause(options);
 
@@ -105,50 +149,13 @@ const buildProductQuery = (queryParams, options = {}) => {
   };
 };
 
-/**
- * Build query for getting total count (used for pagination)
- * @param {Object} queryParams - Same query parameters as buildProductQuery
- * @returns {Object} Count query configuration
- */
-const buildProductCountQuery = (queryParams) => {
-  const {
-    search,
-    category,
-    categories,
-    minPrice,
-    maxPrice,
-    isOrganic,
-    isFeatured,
-    isAvailable
-  } = queryParams;
-
-  // Parse category filters (same logic as main query)
-  let categoryIds = [];
-  if (category) {
-    categoryIds = Array.isArray(category) ? category : [category];
-  }
-  if (categories) {
-    const additionalCategories = Array.isArray(categories) ? categories : [categories];
-    categoryIds = [...categoryIds, ...additionalCategories];
-  }
-  categoryIds = [...new Set(categoryIds)].map(id => parseInt(id)).filter(id => !isNaN(id));
-
-  // Build filters (same logic as main query)
-  const whereClause = buildWhereClause({
-    search,
-    categoryIds,
-    minPrice: minPrice ? parseFloat(minPrice) : undefined,
-    maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
-    isOrganic: isOrganic !== undefined ? isOrganic === 'true' : undefined,
-    isFeatured: isFeatured !== undefined ? isFeatured === 'true' : undefined,
-    isAvailable: isAvailable !== undefined ? isAvailable === 'true' : true
-  });
-
-  return { where: whereClause };
-};
-
 module.exports = {
+  parseQueryParameters,
+  validateQueryParameters,
+  buildWhereClause,
+  buildOrderByClause,
+  buildPaginationMetadata,
+  buildFilterMetadata,
   buildProductQuery,
-  buildProductCountQuery,
   buildPaginationMeta
 };

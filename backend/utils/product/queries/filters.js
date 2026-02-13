@@ -59,14 +59,30 @@ const buildWhereClause = (filters) => {
 
   // Add price range filter
   if (minPrice !== undefined || maxPrice !== undefined) {
-    whereClause.salePrice = {};
+    // If minPrice is set, we want products where (salePrice >= minPrice) OR (salePrice is NULL AND price >= minPrice)
+    // However, Prisma doesn't support complex OR conditions within a single field well in a clean way for price ranges.
+    // A better approach for simple e-commerce is to ensure salePrice defaults to price if not set, 
+    // but here we have to work with the schema where salePrice is optional.
+    
+    // Most robust way in Prisma for this schema:
+    whereClause.AND = whereClause.AND || [];
     
     if (minPrice !== undefined && minPrice >= 0) {
-      whereClause.salePrice.gte = minPrice;
+      whereClause.AND.push({
+        OR: [
+          { salePrice: { gte: minPrice } },
+          { AND: [{ salePrice: null }, { price: { gte: minPrice } }] }
+        ]
+      });
     }
     
     if (maxPrice !== undefined && maxPrice >= 0) {
-      whereClause.salePrice.lte = maxPrice;
+      whereClause.AND.push({
+        OR: [
+          { salePrice: { lte: maxPrice } },
+          { AND: [{ salePrice: null }, { price: { lte: maxPrice } }] }
+        ]
+      });
     }
   }
 

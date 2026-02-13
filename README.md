@@ -3,7 +3,7 @@
 ![Progress](https://img.shields.io/badge/Overall_Progress-20%25-orange?style=for-the-badge)
 ![Backend](https://img.shields.io/badge/Backend-75%25-green?style=for-the-badge)
 ![Frontend](https://img.shields.io/badge/Frontend-60%25-yellow?style=for-the-badge)
-![E-commerce Core](https://img.shields.io/badge/E--commerce_Core-5%25-red?style=for-the-badge)
+![E-commerce Core](https://img.shields.io/badge/E--commerce_Core-15%25-orange?style=for-the-badge)
 
 > 🚀 A modern, scalable e-commerce platform for fresh fruits and vegetables delivery built with React, TypeScript, Node.js, and PostgreSQL.
 
@@ -15,7 +15,7 @@
 Authentication & Security  ████████████████████░░░░░ 80%
 Frontend Foundation       ████████████████░░░░░░░░░ 60%
 Backend Infrastructure    ██████████████████░░░░░░░ 75%
-E-commerce Core          ██░░░░░░░░░░░░░░░░░░░░░░░░  5%
+E-commerce Core          ████░░░░░░░░░░░░░░░░░░░░░░ 15%
 Payment System           ░░░░░░░░░░░░░░░░░░░░░░░░░░  0%
 Admin Dashboard          ░░░░░░░░░░░░░░░░░░░░░░░░░░  0%
 Analytics & Reports      ░░░░░░░░░░░░░░░░░░░░░░░░░░  0%
