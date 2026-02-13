@@ -1,0 +1,9 @@
+{
+  "name": "pradhanfresh",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Fresh produce e-commerce platform",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
