@@ -21,8 +21,8 @@ Building a scalable, secure, and feature-rich e-commerce platform for fresh prod
 - ✅ Implement refresh token system
 - ✅ Add account verification status check
 - ✅ Add user profile endpoint
-- ❌ **NEXT:** Add user profile update endpoint
-- ❌ **NEXT:** Add change password endpoint
+- ✅ **NEXT:** Add user profile update endpoint
+- ✅ **NEXT:** Add change password endpoint
 - ❌ **NEXT:** Add account deactivation endpoint
 
 ### **1.2 Authentication Frontend** (React Components)
