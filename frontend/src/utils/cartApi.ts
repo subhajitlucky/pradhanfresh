@@ -1,7 +1,7 @@
 import api from './api';
 
 // TypeScript interfaces for API responses
-interface ApiResponse<T = any> {
+interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
   data?: T;
@@ -53,7 +53,7 @@ export const cartApi = {
     try {
       const response = await api.get('/cart');
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Error fetching cart:', error);
       throw error;
     }
@@ -69,7 +69,7 @@ export const cartApi = {
       console.log('✅ Add to cart response:', response.data);
       
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Error adding to cart:', error);
       throw error;
     }
@@ -85,7 +85,7 @@ export const cartApi = {
       console.log('✅ Update cart item response:', response.data);
       
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Error updating cart item:', error);
       throw error;
     }
@@ -100,7 +100,7 @@ export const cartApi = {
       console.log('✅ Remove from cart response:', response.data);
       
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Error removing from cart:', error);
       throw error;
     }
@@ -115,7 +115,7 @@ export const cartApi = {
       console.log('✅ Clear cart response:', response.data);
       
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Error clearing cart:', error);
       throw error;
     }

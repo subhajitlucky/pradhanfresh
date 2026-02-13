@@ -40,7 +40,7 @@ const Profile = () => {
         setIsEditing(false);
         setMessage({ type: 'success', text: 'Profile updated successfully!' });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setMessage({ type: 'error', text: error.response?.data?.message || 'Update failed' });
     } finally {
       setLoading(false);
@@ -63,7 +63,7 @@ const Profile = () => {
         setMessage({ type: 'success', text: 'Password changed successfully!' });
         setPasswords({ current: '', new: '', confirm: '' });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setMessage({ type: 'error', text: error.response?.data?.message || 'Password change failed' });
     } finally {
       setLoading(false);

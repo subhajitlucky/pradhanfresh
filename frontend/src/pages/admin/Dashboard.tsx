@@ -30,20 +30,10 @@ interface Product {
   updatedAt: string;
 }
 
-interface Category {
-  id: number;
-  name: string;
-  slug: string;
-  description: string | null;
-  image: string | null;
-  productCount: number;
-}
-
 const AdminDashboard = () => {
   const { user, token } = useAuth();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalCategories: 0,
@@ -99,7 +89,7 @@ const AdminDashboard = () => {
         }
 
         setError('');
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching dashboard data:', error);
         setError('Failed to load dashboard data');
       } finally {
@@ -124,7 +114,7 @@ const AdminDashboard = () => {
         ...prev,
         totalProducts: prev.totalProducts - 1
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting product:', error);
       alert('Failed to delete product');
     }

@@ -17,7 +17,7 @@ const EmailVerified = () => {
       try {
         const response = await api.get(`/auth/verify-email/${token}`);
         setMessage(response.data.message);
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (err.response && err.response.data && err.response.data.error) {
           setError(err.response.data.error);
         } else {

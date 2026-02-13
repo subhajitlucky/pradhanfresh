@@ -86,7 +86,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         // Cart might be empty
         setCart(null);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching cart:', error);
       if (error.response?.status !== 404) {
         setError('Failed to load cart');
@@ -116,7 +116,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         setError(response.message || 'Failed to add item to cart');
         return false;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error adding to cart:', error);
       setError(error.response?.data?.message || 'Failed to add item to cart');
       return false;
@@ -144,7 +144,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         setError(response.message || 'Failed to update cart item');
         return false;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating cart item:', error);
       setError(error.response?.data?.message || 'Failed to update cart item');
       return false;
@@ -168,7 +168,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         setError(response.message || 'Failed to remove item from cart');
         return false;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error removing from cart:', error);
       setError(error.response?.data?.message || 'Failed to remove item from cart');
       return false;
@@ -191,7 +191,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         setError(response.message || 'Failed to clear cart');
         return false;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error clearing cart:', error);
       setError(error.response?.data?.message || 'Failed to clear cart');
       return false;

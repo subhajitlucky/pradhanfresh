@@ -182,7 +182,7 @@ const Products = () => {
         setError('Failed to load products');
       }
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching products:', error);
       setError(error.response?.data?.message || error.message || 'Failed to load products');
     } finally {

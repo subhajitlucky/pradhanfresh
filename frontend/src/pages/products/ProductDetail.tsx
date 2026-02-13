@@ -55,7 +55,7 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   
   // Cart context
-  const { addToCart, loading: cartLoading, isInCart, getCartItem } = useCart();
+  const { addToCart, isInCart, getCartItem } = useCart();
   
   // Component state management
   const [product, setProduct] = useState<Product | null>(null);
@@ -91,7 +91,7 @@ const ProductDetail = () => {
           setError('Product not found');
         }
         
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('❌ Error fetching product:', error);
         if (error.response?.status === 404) {
           setError('Product not found');

@@ -23,7 +23,7 @@ const Login = () => {
       const { user, token } = response.data;
       login(user, token); // Update the global auth state
       navigate('/profile'); // Redirect to profile page on successful login
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err.response && err.response.data && err.response.data.error) {
         setError(err.response.data.error);
       } else {

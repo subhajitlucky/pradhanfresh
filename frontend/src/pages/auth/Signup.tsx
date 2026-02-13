@@ -39,7 +39,7 @@ const Signup = () => {
         navigate('/login');
       }, 2000);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err.response && err.response.data && err.response.data.error) {
         setError(err.response.data.error);
       } else {

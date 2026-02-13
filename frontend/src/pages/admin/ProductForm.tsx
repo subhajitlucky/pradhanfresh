@@ -103,7 +103,7 @@ const AdminProductForm = () => {
             });
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         setError('Failed to load data');
         console.error('Error fetching data:', error);
       } finally {
@@ -220,7 +220,7 @@ const AdminProductForm = () => {
       } else {
         setError(response.data.message || 'Failed to save product');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving product:', error);
       if (error.response?.data?.message) {
         setError(error.response.data.message);
