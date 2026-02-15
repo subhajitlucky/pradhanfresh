@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const prisma = require('../../../prisma/client');
+const prisma = require('../../prisma/client');
 
 // GET /api/admin/dashboard/stats - Get key stats for the dashboard
 router.get('/stats', async (req, res) => {

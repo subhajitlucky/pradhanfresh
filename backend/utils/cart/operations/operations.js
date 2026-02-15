@@ -1,7 +1,7 @@
 // Re-export all cart operations from focused modules
 const { getOrCreateCart } = require('./creation');
 const { addItemToCart } = require('./itemManagement');
-const { updateCartTotal, getFinalCartData } = require('./calculations');
+const { updateCartTotal, getFinalCartData } = require('../support/calculations');
 
 module.exports = {
   getOrCreateCart,
@@ -23,7 +23,7 @@ AVAILABLE OPERATIONS:
 
 USAGE:
 ```javascript
-const { getOrCreateCart, addItemToCart, updateCartTotal, getFinalCartData } = require('../utils/cart/operations');
+const { getOrCreateCart, addItemToCart, updateCartTotal, getFinalCartData } = require('./operations');
 
 // Complete cart operation flow
 const cart = await getOrCreateCart(userId);

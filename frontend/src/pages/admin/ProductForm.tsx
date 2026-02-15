@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import {
+  ChevronLeft,
+  Upload,
+  Trash2,
+  Star,
+  Leaf,
+  Save,
+  CheckCircle2
+} from 'lucide-react';
 import api from '../../utils/api';
-
-interface Category {
-  id: number;
-  name: string;
-  slug: string;
-}
+import { cn } from '../../utils/cn';
 
 interface ProductFormData {
   name: string;
@@ -26,10 +29,14 @@ interface ProductFormData {
   isOrganic: boolean;
 }
 
+interface Category {
+  id: number;
+  name: string;
+}
+
 const AdminProductForm = () => {
-  const { user, token } = useAuth();
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const isEditing = Boolean(id);
 
   const [formData, setFormData] = useState<ProductFormData>({
@@ -51,531 +58,240 @@ const AdminProductForm = () => {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  // Check admin access
-  useEffect(() => {
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    
-    if (user && user.role !== 'ADMIN') {
-      navigate('/');
-      return;
-    }
-  }, [token, user, navigate]);
-
-  // Fetch categories and product data (if editing)
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch categories
-        const categoriesResponse = await api.get('/categories');
-        if (categoriesResponse.data.success) {
-          setCategories(categoriesResponse.data.data);
-        }
+      const catRes = await api.get('/categories');
+      if (catRes.data.success) setCategories(catRes.data.data);
 
-        // If editing, fetch product data
-        if (isEditing && id) {
-          const productResponse = await api.get(`/products/${id}`);
-          if (productResponse.data.success) {
-            const product = productResponse.data.data;
-            setFormData({
-              name: product.name,
-              description: product.description,
-              shortDescription: product.shortDescription || '',
-              price: product.price.toString(),
-              salePrice: product.salePrice?.toString() || '',
-              categoryId: product.categoryId.toString(),
-              images: product.images || [],
-              thumbnail: product.thumbnail,
-              stock: product.stock.toString(),
-              sku: product.sku,
-              unit: product.unit,
-              weight: product.weight?.toString() || '',
-              isFeatured: product.isFeatured,
-              isOrganic: product.isOrganic
-            });
-          }
+      if (isEditing) {
+        const prodRes = await api.get(`/products/${id}`);
+        if (prodRes.data.success) {
+          const p = prodRes.data.data;
+          setFormData({
+            ...p,
+            price: p.price.toString(),
+            salePrice: p.salePrice?.toString() || '',
+            categoryId: p.categoryId.toString(),
+            stock: p.stock.toString(),
+            weight: p.weight?.toString() || ''
+          });
         }
-      } catch (error: unknown) {
-        setError('Failed to load data');
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
       }
     };
+    fetchData();
+  }, [id, isEditing]);
 
-    if (user && user.role === 'ADMIN') {
-      fetchData();
-    }
-  }, [user, isEditing, id]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    
-    if (type === 'checkbox') {
-      const checked = (e.target as HTMLInputElement).checked;
-      setFormData(prev => ({
-        ...prev,
-        [name]: checked
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const data = {
+        ...formData,
+        price: parseFloat(formData.price),
+        salePrice: formData.salePrice ? parseFloat(formData.salePrice) : null,
+        categoryId: parseInt(formData.categoryId),
+        stock: parseInt(formData.stock),
+        weight: formData.weight ? parseFloat(formData.weight) : null
+      };
+      if (isEditing) await api.put(`/products/${id}`, data);
+      else await api.post('/products', data);
+      navigate('/admin/dashboard');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
+    setUploading(true);
+    const fd = new FormData();
+    fd.append('image', file);
     try {
-      setUploading(true);
-      setError('');
-
-      const formDataUpload = new FormData();
-      formDataUpload.append('image', file);
-
-      const response = await api.post('/upload', formDataUpload, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-
-      if (response.data.success) {
-        const imageUrl = response.data.data.url;
-        setFormData(prev => ({
+      const res = await api.post('/upload', fd);
+      if (res.data.success) {
+        const url = res.data.data.url;
+        setFormData((prev: ProductFormData) => ({
           ...prev,
-          thumbnail: prev.thumbnail || imageUrl,
-          images: [...prev.images, imageUrl]
+          thumbnail: prev.thumbnail || url,
+          images: [...prev.images, url]
         }));
       }
-    } catch (error: any) {
-      console.error('Upload failed:', error);
-      setError(error.response?.data?.message || 'Image upload failed');
     } finally {
       setUploading(false);
     }
   };
 
-  const handleRemoveImage = (index: number) => {
-    const removedUrl = formData.images[index];
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-      thumbnail: prev.thumbnail === removedUrl ? (prev.images.length > 1 ? prev.images.find(img => img !== removedUrl) || '' : '') : prev.thumbnail
-    }));
-  };
-
-  const handleSetThumbnail = (imageUrl: string) => {
-    setFormData(prev => ({
-      ...prev,
-      thumbnail: imageUrl
-    }));
-  };
-
-  const validateForm = (): string[] => {
-    const errors: string[] = [];
-
-    if (!formData.name.trim()) errors.push('Product name is required');
-    if (!formData.description.trim()) errors.push('Description is required');
-    if (!formData.price || parseFloat(formData.price) <= 0) errors.push('Valid price is required');
-    if (!formData.categoryId) errors.push('Category is required');
-    if (!formData.thumbnail.trim()) errors.push('Thumbnail image is required');
-    if (!formData.sku.trim()) errors.push('SKU is required');
-    if (!formData.unit.trim()) errors.push('Unit is required');
-    if (formData.salePrice && parseFloat(formData.salePrice) >= parseFloat(formData.price)) {
-      errors.push('Sale price must be less than regular price');
-    }
-
-    return errors;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-
-    const validationErrors = validateForm();
-    if (validationErrors.length > 0) {
-      setError(validationErrors.join(', '));
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const submitData = {
-        name: formData.name.trim(),
-        description: formData.description.trim(),
-        shortDescription: formData.shortDescription.trim() || null,
-        price: parseFloat(formData.price),
-        salePrice: formData.salePrice ? parseFloat(formData.salePrice) : null,
-        categoryId: parseInt(formData.categoryId),
-        images: formData.images.length > 0 ? formData.images : [formData.thumbnail],
-        thumbnail: formData.thumbnail.trim(),
-        stock: parseInt(formData.stock),
-        sku: formData.sku.trim(),
-        unit: formData.unit.trim(),
-        weight: formData.weight ? parseFloat(formData.weight) : null,
-        isFeatured: formData.isFeatured,
-        isOrganic: formData.isOrganic
-      };
-
-      let response;
-      if (isEditing) {
-        response = await api.put(`/products/${id}`, submitData);
-      } else {
-        response = await api.post('/products', submitData);
-      }
-
-      if (response.data.success) {
-        setSuccess(`Product ${isEditing ? 'updated' : 'created'} successfully!`);
-        setTimeout(() => {
-          navigate('/admin/dashboard');
-        }, 1500);
-      } else {
-        setError(response.data.message || 'Failed to save product');
-      }
-    } catch (error: any) {
-      console.error('Error saving product:', error);
-      if (error.response?.data?.message) {
-        setError(error.response.data.message);
-      } else {
-        setError(`Failed to ${isEditing ? 'update' : 'create'} product`);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (!user || user.role !== 'ADMIN') {
-    return (
-      <div className="admin-container">
-        <div className="admin-error">
-          <h2>Access Denied</h2>
-          <p>You don't have permission to access this page.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="admin-container">
-      <div className="admin-header">
-        <h1 className="admin-title">
-          {isEditing ? 'Edit Product' : 'Add New Product'}
-        </h1>
-        <button 
-          className="admin-back-btn"
-          onClick={() => navigate('/admin/dashboard')}
-        >
-          ← Back to Dashboard
-        </button>
-      </div>
-
-      {error && (
-        <div className="admin-error-message">
-          <p>{error}</p>
-        </div>
-      )}
-
-      {success && (
-        <div className="admin-success-message">
-          <p>{success}</p>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="admin-product-form">
-        <div className="admin-form-grid">
-          {/* Basic Information */}
-          <div className="admin-form-section">
-            <h3>Basic Information</h3>
-            
-            <div className="admin-form-group">
-              <label htmlFor="name">Product Name *</label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-                className="admin-form-input"
-                placeholder="Enter product name"
-              />
-            </div>
-
-            <div className="admin-form-group">
-              <label htmlFor="sku">SKU *</label>
-              <input
-                type="text"
-                id="sku"
-                name="sku"
-                value={formData.sku}
-                onChange={handleInputChange}
-                required
-                className="admin-form-input"
-                placeholder="Enter unique SKU"
-              />
-            </div>
-
-            <div className="admin-form-group">
-              <label htmlFor="categoryId">Category *</label>
-              <select
-                id="categoryId"
-                name="categoryId"
-                value={formData.categoryId}
-                onChange={handleInputChange}
-                required
-                className="admin-form-select"
-              >
-                <option value="">Select a category</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="admin-form-group">
-              <label htmlFor="description">Description *</label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                required
-                className="admin-form-textarea"
-                rows={4}
-                placeholder="Enter detailed product description"
-              />
-            </div>
-
-            <div className="admin-form-group">
-              <label htmlFor="shortDescription">Short Description</label>
-              <textarea
-                id="shortDescription"
-                name="shortDescription"
-                value={formData.shortDescription}
-                onChange={handleInputChange}
-                className="admin-form-textarea"
-                rows={2}
-                placeholder="Enter brief product description (optional)"
-              />
-            </div>
+    <div className="pt-28 pb-24 px-4 bg-white min-h-screen">
+      <div className="max-w-5xl mx-auto">
+        <header className="flex items-center justify-between mb-12">
+          <button
+            onClick={() => navigate('/admin/dashboard')}
+            className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-primary-600 transition-all italic group"
+          >
+            <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+            Back to Dashboard
+          </button>
+          <div className="text-right">
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight italic">
+              {isEditing ? 'Refine Product' : 'Register New Item'}
+            </h1>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Inventory Management System</p>
           </div>
+        </header>
 
-          {/* Pricing & Inventory */}
-          <div className="admin-form-section">
-            <h3>Pricing & Inventory</h3>
-            
-            <div className="admin-form-row">
-              <div className="admin-form-group">
-                <label htmlFor="price">Regular Price (₹) *</label>
-                <input
-                  type="number"
-                  id="price"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  required
-                  min="0"
-                  step="0.01"
-                  className="admin-form-input"
-                  placeholder="0.00"
-                />
+        <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-12">
+          {/* Main Info */}
+          <div className="lg:col-span-2 space-y-12">
+            <section className="space-y-6">
+              <div className="flex items-center gap-2 text-primary-600 font-bold text-xs uppercase tracking-widest italic pl-2">
+                <div className="w-2 h-2 rounded-full bg-primary-600" />
+                General Details
               </div>
-
-              <div className="admin-form-group">
-                <label htmlFor="salePrice">Sale Price (₹)</label>
-                <input
-                  type="number"
-                  id="salePrice"
-                  name="salePrice"
-                  value={formData.salePrice}
-                  onChange={handleInputChange}
-                  min="0"
-                  step="0.01"
-                  className="admin-form-input"
-                  placeholder="0.00 (optional)"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Product Title</label>
+                  <input
+                    value={formData.name}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g. Organic Alphonso Mango"
+                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-primary-100 outline-none transition-all font-bold"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Unique SKU</label>
+                  <input
+                    value={formData.sku}
+                    onChange={e => setFormData({ ...formData, sku: e.target.value })}
+                    placeholder="PF-MNG-001"
+                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-primary-100 outline-none transition-all font-bold"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Category</label>
+                  <select
+                    value={formData.categoryId}
+                    onChange={e => setFormData({ ...formData, categoryId: e.target.value })}
+                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-primary-100 outline-none transition-all font-bold appearance-none bg-select-arrow"
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Story / Description</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    rows={6}
+                    placeholder="Tell the story of where this was grown..."
+                    className="w-full px-6 py-6 rounded-3xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-primary-100 outline-none transition-all font-bold resize-none italic"
+                  />
+                </div>
               </div>
-            </div>
+            </section>
 
-            <div className="admin-form-row">
-              <div className="admin-form-group">
-                <label htmlFor="stock">Stock Quantity *</label>
-                <input
-                  type="number"
-                  id="stock"
-                  name="stock"
-                  value={formData.stock}
-                  onChange={handleInputChange}
-                  required
-                  min="0"
-                  className="admin-form-input"
-                  placeholder="0"
-                />
+            <section className="space-y-6">
+              <div className="flex items-center gap-2 text-primary-600 font-bold text-xs uppercase tracking-widest italic pl-2">
+                <div className="w-2 h-2 rounded-full bg-primary-600" />
+                Visual Assets
               </div>
-
-              <div className="admin-form-group">
-                <label htmlFor="unit">Unit *</label>
-                <select
-                  id="unit"
-                  name="unit"
-                  value={formData.unit}
-                  onChange={handleInputChange}
-                  required
-                  className="admin-form-select"
-                >
-                  <option value="kg">Kilogram (kg)</option>
-                  <option value="g">Gram (g)</option>
-                  <option value="lb">Pound (lb)</option>
-                  <option value="piece">Piece</option>
-                  <option value="dozen">Dozen</option>
-                  <option value="liter">Liter</option>
-                  <option value="ml">Milliliter (ml)</option>
-                  <option value="pack">Pack</option>
-                  <option value="bunch">Bunch</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="admin-form-group">
-              <label htmlFor="weight">Weight (kg)</label>
-              <input
-                type="number"
-                id="weight"
-                name="weight"
-                value={formData.weight}
-                onChange={handleInputChange}
-                min="0"
-                step="0.01"
-                className="admin-form-input"
-                placeholder="Weight in kg (optional)"
-              />
-            </div>
-          </div>
-
-          {/* Images */}
-          <div className="admin-form-section full-width">
-            <h3>Product Images</h3>
-            
-            <div className="admin-form-group">
-              <label>Upload Product Image</label>
-              <div className="admin-file-input-wrapper">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  disabled={uploading}
-                  className="admin-file-input"
-                  id="image-upload"
-                />
-                <label htmlFor="image-upload" className={`admin-file-label ${uploading ? 'disabled' : ''}`}>
-                  {uploading ? 'Uploading...' : 'Choose File'}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <label className="aspect-square rounded-3xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-gray-50 transition-all text-gray-400 group">
+                  <div className="p-3 bg-gray-50 rounded-2xl group-hover:bg-primary-50 group-hover:text-primary-600 transition-all">
+                    <Upload size={20} />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest italic">Add Image</span>
+                  <input type="file" onChange={handleFileUpload} className="hidden" />
                 </label>
-                {uploading && <div className="admin-upload-spinner"></div>}
-              </div>
-              <p className="admin-form-help">Max file size: 5MB. Formats: JPG, PNG, WEBP.</p>
-            </div>
-
-            {formData.images.length > 0 && (
-              <div className="admin-images-list">
-                {formData.images.map((image, index) => (
-                  <div key={index} className="admin-image-item">
-                    <img 
-                      src={image.startsWith('http') ? image : `http://localhost:5000${image}`} 
-                      alt={`Product ${index + 1}`} 
-                    />
-                    <div className="admin-image-actions">
-                      <button
-                        type="button"
-                        onClick={() => handleSetThumbnail(image)}
-                        className={`admin-btn-small ${formData.thumbnail === image ? 'success' : 'primary'}`}
-                        disabled={image === formData.thumbnail}
-                      >
-                        {image === formData.thumbnail ? 'Thumbnail ✓' : 'Set as Thumbnail'}
+                {formData.images.map((img: string, i: number) => (
+                  <div key={i} className="aspect-square rounded-3xl relative group overflow-hidden border border-gray-100">
+                    <img src={img} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <button type="button" onClick={() => setFormData({ ...formData, thumbnail: img })} className={cn("p-2 rounded-xl", formData.thumbnail === img ? "bg-primary-600 text-white" : "bg-white text-gray-900")}>
+                        <CheckCircle2 size={16} />
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveImage(index)}
-                        className="admin-btn-small delete"
-                      >
-                        Remove
+                      <button type="button" onClick={() => setFormData({ ...formData, images: formData.images.filter((_: string, idx: number) => idx !== i) })} className="p-2 bg-white text-red-500 rounded-xl">
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
-            )}
-            
-            {!formData.thumbnail && (
-              <p className="admin-error-text">Please upload at least one image and set it as thumbnail.</p>
-            )}
+            </section>
           </div>
 
-          {/* Product Attributes */}
-          <div className="admin-form-section full-width">
-            <h3>Product Attributes</h3>
-            
-            <div className="admin-checkbox-group">
-              <label className="admin-checkbox-label">
-                <input
-                  type="checkbox"
-                  name="isFeatured"
-                  checked={formData.isFeatured}
-                  onChange={handleInputChange}
-                  className="admin-checkbox"
-                />
-                <span className="admin-checkbox-text">Featured Product</span>
-                <span className="admin-checkbox-help">This product will be highlighted on the homepage</span>
-              </label>
+          {/* Sidebar / Options */}
+          <aside className="space-y-8">
+            <div className="bg-gray-50 p-8 rounded-[40px] space-y-6">
+              <h3 className="text-xl font-black text-gray-900 italic">Inventory & Price</h3>
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2 italic">MRP (₹)</label>
+                  <input
+                    type="number"
+                    value={formData.price}
+                    onChange={e => setFormData({ ...formData, price: e.target.value })}
+                    className="w-full px-5 py-4 rounded-xl bg-white border border-gray-100 outline-none font-black text-lg"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2 italic">Sale Price (₹)</label>
+                  <input
+                    type="number"
+                    value={formData.salePrice}
+                    onChange={e => setFormData({ ...formData, salePrice: e.target.value })}
+                    className="w-full px-5 py-4 rounded-xl bg-white border border-gray-100 outline-none font-black text-lg text-primary-600"
+                  />
+                </div>
+                <div className="space-y-1 pt-4">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2 italic">Stock Count</label>
+                  <div className="flex bg-white rounded-xl border border-gray-100 p-1">
+                    <button type="button" onClick={() => setFormData({ ...formData, stock: (parseInt(formData.stock) - 1).toString() })} className="p-3 text-gray-400"><Minus size={18} /></button>
+                    <input type="number" value={formData.stock} onChange={e => setFormData({ ...formData, stock: e.target.value })} className="w-full text-center font-black outline-none" />
+                    <button type="button" onClick={() => setFormData({ ...formData, stock: (parseInt(formData.stock) + 1).toString() })} className="p-3 text-gray-400"><Plus size={18} /></button>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-              <label className="admin-checkbox-label">
-                <input
-                  type="checkbox"
-                  name="isOrganic"
-                  checked={formData.isOrganic}
-                  onChange={handleInputChange}
-                  className="admin-checkbox"
-                />
-                <span className="admin-checkbox-text">Organic Product</span>
-                <span className="admin-checkbox-help">This product is certified organic</span>
+            <div className="bg-white p-8 rounded-[40px] border border-gray-100 space-y-4 shadow-sm">
+              <h3 className="text-lg font-black text-gray-900 italic mb-4">Attributes</h3>
+              <label className="flex items-center justify-between p-4 rounded-2xl bg-yellow-50/50 cursor-pointer group">
+                <div className="flex items-center gap-3">
+                  <Star className="text-yellow-500" size={18} />
+                  <span className="text-sm font-bold text-gray-700 italic">Featured Item</span>
+                </div>
+                <input type="checkbox" checked={formData.isFeatured} onChange={e => setFormData({ ...formData, isFeatured: e.target.checked })} className="w-5 h-5 rounded-lg border-gray-200 text-yellow-500 focus:ring-yellow-400" />
+              </label>
+              <label className="flex items-center justify-between p-4 rounded-2xl bg-emerald-50/50 cursor-pointer group">
+                <div className="flex items-center gap-3">
+                  <Leaf className="text-emerald-500" size={18} />
+                  <span className="text-sm font-bold text-gray-700 italic">Certified Organic</span>
+                </div>
+                <input type="checkbox" checked={formData.isOrganic} onChange={e => setFormData({ ...formData, isOrganic: e.target.checked })} className="w-5 h-5 rounded-lg border-gray-200 text-emerald-500 focus:ring-emerald-400" />
               </label>
             </div>
-          </div>
-        </div>
 
-        <div className="admin-form-actions">
-          <button
-            type="button"
-            onClick={() => navigate('/admin/dashboard')}
-            className="admin-action-btn secondary"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading || uploading}
-            className="admin-action-btn primary"
-          >
-            {loading ? 'Saving...' : isEditing ? 'Update Product' : 'Create Product'}
-          </button>
-        </div>
-      </form>
+            <button
+              type="submit"
+              disabled={loading || uploading}
+              className="w-full py-6 bg-primary-600 text-white rounded-[32px] font-black text-xl shadow-2xl shadow-primary-100 hover:bg-primary-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-3"
+            >
+              <Save size={24} /> {loading ? 'Saving...' : 'Finish & Save'}
+            </button>
+          </aside>
+        </form>
+      </div>
     </div>
   );
 };
+
+const Minus = ({ size }: { size: number }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
 
 export default AdminProductForm;

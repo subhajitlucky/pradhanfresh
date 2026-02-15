@@ -100,7 +100,7 @@ VALIDATION RESPONSE FORMAT:
 
 USAGE EXAMPLE:
 ```javascript
-const { validateAddToCartInput } = require('../utils/cart/validation');
+const { validateAddToCartInput } = require('./validation');
 
 const validation = validateAddToCartInput({
   productId: "123",

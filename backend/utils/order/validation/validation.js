@@ -1,4 +1,4 @@
-const prisma = require('../../prisma/client');
+const prisma = require('../../../prisma/client');
 
 /**
  * Validate order status transition
@@ -167,7 +167,7 @@ Terminal States: CANCELLED, RETURNED (no further transitions allowed)
 
 USAGE EXAMPLES:
 ```javascript
-const { validateStatusTransition, validateCartForOrder, validateDeliveryAddress } = require('../utils/order/validation');
+const { validateStatusTransition, validateCartForOrder, validateDeliveryAddress } = require('./validation');
 
 // Status transition validation
 const statusCheck = validateStatusTransition('PENDING', 'CONFIRMED'); // Valid

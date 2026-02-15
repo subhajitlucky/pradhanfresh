@@ -24,7 +24,7 @@ AVAILABLE FUNCTIONS:
 
 USAGE:
 ```javascript
-const orderValidation = require('../utils/order/orderValidation');
+const orderValidation = require('./orderValidation');
 
 // Validate order creation
 const orderResult = orderValidation.validateOrderCreationInput(data);

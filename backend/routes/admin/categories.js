@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const requireAuth = require('../../../middleware/requireAuth');
-const requireAdmin = require('../../../middleware/requireAdmin');
+const requireAuth = require('../../middleware/requireAuth');
+const requireAdmin = require('../../middleware/requireAdmin');
 const { 
   handleCreateCategory, 
   handleUpdateCategory, 
   handleDeleteCategory, 
   handleGetCategories 
-} = require('../../../utils/admin/operations/categoryHandlers/categoryHandlers');
+} = require('../../utils/admin/operations/categoryHandlers/categoryHandlers');
 
 // Apply middleware to all routes
 router.use(requireAuth, requireAdmin);

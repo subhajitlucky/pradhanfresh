@@ -3,8 +3,8 @@ const router = express.Router();
 const prisma = require('../../prisma/client');
 const requireAuth = require('../../middleware/requireAuth');
 const { validateStatusTransition, getOrderStatusInfo } = require('../../utils/orderUtils');
-const { validateStatusUpdateInput } = require('../../utils/order/orderValidation');
-const { updateOrderStatus } = require('../../utils/order/orderOperations');
+const { validateStatusUpdateInput } = require('../../utils/order/validation/orderValidation');
+const { updateOrderStatus } = require('../../utils/order/operations/orderOperations');
 
 // PUT /api/orders/:orderNumber/status - Update order status (Admin only)
 router.put('/:orderNumber/status', requireAuth, async (req, res) => {

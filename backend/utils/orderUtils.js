@@ -1,9 +1,9 @@
 // Import all order utility functions from modular files
-const { generateOrderNumber } = require('./order/orderNumber');
-const { calculateOrderTotals, calculateItemSubtotal, calculateDeliveryFee } = require('./order/calculations');
+const { generateOrderNumber } = require('./order/support/orderNumber');
+const { calculateOrderTotals, calculateItemSubtotal, calculateDeliveryFee } = require('./cart/support/calculations');
 const { validateStatusTransition, validateCartForOrder, validateDeliveryAddress } = require('./order/validation');
-const { updateProductStock } = require('./order/stockManagement');
-const { getOrderStatusInfo } = require('./order/statusInfo');
+const { updateProductStock } = require('./order/support/stockManagement');
+const { getOrderStatusInfo } = require('./order/support/statusInfo');
 
 // Re-export all functions for backward compatibility
 module.exports = {

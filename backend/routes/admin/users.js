@@ -10,9 +10,9 @@
 
 const express = require('express');
 const router = express.Router();
-const requireAuth = require('../../../middleware/requireAuth');
-const requireAdmin = require('../../../middleware/requireAdmin');
-const { handleGetUsers, handleGetUserDetails, handleUpdateUserRole } = require('../../../utils/admin/userHandlers');
+const requireAuth = require('../../middleware/requireAuth');
+const requireAdmin = require('../../middleware/requireAdmin');
+const { handleGetUsers, handleGetUserDetails, handleUpdateUserRole } = require('../../utils/admin/operations/userHandlers');
 
 // Apply middleware to all routes
 router.use(requireAuth, requireAdmin);

@@ -1,4 +1,4 @@
-const prisma = require('../../prisma/client');
+const prisma = require('../../../prisma/client');
 
 /**
  * Create new category with unique slug

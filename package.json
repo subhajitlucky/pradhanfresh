@@ -4,6 +4,13 @@
   "private": true,
   "description": "Fresh produce e-commerce platform",
   "scripts": {
+    "dev": "npm run dev --prefix frontend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "start": "npm run dev:backend & npm run dev:frontend",
+    "build": "npm run build --prefix frontend",
+    "lint": "npm run lint --prefix frontend",
+    "stop": "{ lsof -ti :5173 ; lsof -ti :5000 ; } 2>/dev/null | xargs -r kill -9 2>/dev/null; echo 'All servers stopped.'",
     "test": "echo \"Error: no test specified\" && exit 1"
   }
 }

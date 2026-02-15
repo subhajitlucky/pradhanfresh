@@ -1,4 +1,4 @@
-const prisma = require('../../prisma/client');
+const prisma = require('../../../prisma/client');
 const { validateStock, calculateSubtotal } = require('../cartUtils');
 
 /**

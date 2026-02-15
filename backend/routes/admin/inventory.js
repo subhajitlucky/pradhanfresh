@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const prisma = require('../../../prisma/client');
-const requireAuth = require('../../../middleware/requireAuth');
-const requireAdmin = require('../../../middleware/requireAdmin');
+const prisma = require('../../prisma/client');
+const requireAuth = require('../../middleware/requireAuth');
+const requireAdmin = require('../../middleware/requireAdmin');
 
 // GET /api/admin/inventory/low-stock - Get products with low inventory
 router.get('/low-stock', requireAuth, requireAdmin, async (req, res) => {

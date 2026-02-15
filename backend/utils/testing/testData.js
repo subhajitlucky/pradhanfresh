@@ -207,7 +207,7 @@ DATA CHARACTERISTICS:
 
 USAGE EXAMPLES:
 ```javascript
-const { testUsers, testProducts, apiEndpoints } = require('../utils/testing/testData');
+const { testUsers, testProducts, apiEndpoints } = require('./testData');
 
 // Use test user for login
 const response = await axios.post(

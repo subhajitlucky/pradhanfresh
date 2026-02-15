@@ -3,8 +3,8 @@ const router = express.Router();
 const prisma = require('../../prisma/client');
 const requireAuth = require('../../middleware/requireAuth');
 const { getOrderStatusInfo } = require('../../utils/orderUtils');
-const { validatePaginationParams, validateSortParams } = require('../../utils/order/orderValidation');
-const { parseOrderQueryParams, buildOrderWhereClause, buildOrderByClause, buildOrderIncludeClause, calculateOrderPaginationMetadata } = require('../../utils/order/orderQueries');
+const { validatePaginationParams, validateSortParams } = require('../../utils/order/validation/orderValidation');
+const { parseOrderQueryParams, buildOrderWhereClause, buildOrderByClause, buildOrderIncludeClause, calculateOrderPaginationMetadata } = require('../../utils/order/queries/orderQueries');
 
 // GET /api/orders - Get user's orders with filtering and pagination
 router.get('/', requireAuth, async (req, res) => {

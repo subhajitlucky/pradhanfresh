@@ -118,7 +118,7 @@ ORDER STATUS MEANINGS:
 
 USAGE EXAMPLES:
 ```javascript
-const { getOrderStatusInfo } = require('../utils/order/statusInfo');
+const { getOrderStatusInfo } = require('./statusInfo');
 
 // Get status information for display
 const statusInfo = getOrderStatusInfo('SHIPPED');

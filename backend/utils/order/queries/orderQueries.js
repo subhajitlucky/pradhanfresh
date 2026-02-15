@@ -27,7 +27,7 @@ AVAILABLE FUNCTIONS:
 
 USAGE:
 ```javascript
-const orderQueries = require('../utils/order/orderQueries');
+const orderQueries = require('./orderQueries');
 
 // Parse query parameters
 const params = orderQueries.parseOrderQueryParams(req.query, userId);

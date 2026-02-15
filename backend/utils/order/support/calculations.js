@@ -91,7 +91,7 @@ CALCULATION LOGIC:
 
 USAGE EXAMPLES:
 ```javascript
-const { calculateOrderTotals, calculateItemSubtotal, calculateDeliveryFee } = require('../utils/order/calculations');
+const { calculateOrderTotals, calculateItemSubtotal, calculateDeliveryFee } = require('./calculations');
 
 // Calculate item subtotal
 const itemTotal = calculateItemSubtotal(3, 199.99); // 3 × ₹199.99 = ₹599.97

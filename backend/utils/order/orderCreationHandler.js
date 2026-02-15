@@ -1,20 +1,20 @@
 const prisma = require('../../prisma/client');
 const { validateCartForOrder, validateDeliveryAddress } = require('../orderUtils');
-const { validateOrderCreationInput, validateDeliveryDetails } = require('./orderValidation');
-const { createOrderFromCart } = require('./orderOperations');
+const { validateOrderCreationInput, validateDeliveryDetails } = require('./validation/orderValidation');
+const { createOrderFromCart } = require('./operations/orderOperations');
 
 /**
  * Handle order creation from cart
  */
 const handleOrderCreation = async (req, res) => {
   try {
-    const { 
-      deliveryAddress, 
-      deliveryDate, 
-      deliverySlot, 
+    const {
+      deliveryAddress,
+      deliveryDate,
+      deliverySlot,
       paymentMethod = 'COD',
       orderNotes,
-      discount = 0 
+      discount = 0
     } = req.body;
     const userId = req.user.userId;
 

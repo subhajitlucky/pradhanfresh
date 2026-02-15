@@ -1,4 +1,4 @@
-const prisma = require('../../prisma/client');
+const prisma = require('../../../prisma/client');
 
 /**
  * Validate required fields for product creation
@@ -190,7 +190,7 @@ All validation functions return consistent response objects:
 
 USAGE EXAMPLES:
 ```javascript
-const { validateRequiredFields, validatePricing, validateCategory } = require('../utils/product/validation');
+const { validateRequiredFields, validatePricing, validateCategory } = require('./validation');
 
 // Validate required fields
 const fieldsCheck = validateRequiredFields(productData);

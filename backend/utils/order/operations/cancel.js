@@ -1,5 +1,5 @@
-const prisma = require('../../prisma/client');
-const { updateProductStock } = require('../orderUtils');
+const prisma = require('../../../prisma/client');
+const { updateProductStock } = require('../../orderUtils');
 
 /**
  * Cancel order with proper validation and stock restoration

@@ -4,8 +4,8 @@ const prisma = require('../../prisma/client');
 const requireAuth = require('../../middleware/requireAuth');
 const requireAdmin = require('../../middleware/requireAdmin');
 const { validateRequiredFields, validatePricing, validateCategory, validateStock, validateSKUUniqueness } = require('../../utils/product/validation');
-const { generateUniqueSlug } = require('../../utils/product/slug');
-const { prepareProductData } = require('../../utils/product/dataPreparation');
+const { generateUniqueSlug } = require('../../utils/product/support/slug');
+const { prepareProductData } = require('../../utils/product/support/dataPreparation');
 
 // POST /api/products - Create new product (Admin only)
 router.post('/', requireAuth, requireAdmin, async (req, res) => {

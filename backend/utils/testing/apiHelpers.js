@@ -265,7 +265,7 @@ TESTING PATTERNS:
 
 USAGE EXAMPLES:
 ```javascript
-const { createApiClient, loginUser, addItemsToCart, createOrder } = require('../utils/testing/apiHelpers');
+const { createApiClient, loginUser, addItemsToCart, createOrder } = require('./apiHelpers');
 
 // Create API client
 const apiClient = createApiClient('http://localhost:5000/api');

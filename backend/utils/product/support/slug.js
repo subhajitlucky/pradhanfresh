@@ -1,4 +1,4 @@
-const prisma = require('../../prisma/client');
+const prisma = require('../../../prisma/client');
 
 /**
  * Generate URL-friendly slug from product name
@@ -97,7 +97,7 @@ When duplicate slugs are found, the system automatically appends numbers:
 
 USAGE EXAMPLES:
 ```javascript
-const { generateUniqueSlug } = require('../utils/product/slug');
+const { generateUniqueSlug } = require('./slug');
 
 // For new product creation
 const slug = await generateUniqueSlug("Fresh Organic Apples");

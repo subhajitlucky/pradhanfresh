@@ -1,5 +1,5 @@
-const prisma = require('../../prisma/client');
-const { generateOrderNumber, calculateOrderTotals, calculateItemSubtotal, updateProductStock, calculateDeliveryFee } = require('../orderUtils');
+const prisma = require('../../../prisma/client');
+const { generateOrderNumber, calculateOrderTotals, calculateItemSubtotal, updateProductStock, calculateDeliveryFee } = require('../../orderUtils');
 
 /**
  * Create order from cart with transaction safety

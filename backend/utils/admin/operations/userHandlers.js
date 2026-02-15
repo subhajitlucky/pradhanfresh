@@ -3,7 +3,7 @@
  * Contains the business logic for admin user operations
  */
 
-const { validatePaginationParams, validateUserId, validateUserRole } = require('./validation');
+const { validatePaginationParams, validateUserId, validateUserRole } = require('../validation/validation');
 const { getUsers, getUserDetails, updateUserRole } = require('./operations');
 
 /**
@@ -60,7 +60,7 @@ const handleGetUserDetails = async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching user details:', error);
-    
+
     if (error.message === 'User not found') {
       return res.status(404).json({
         success: false,
@@ -107,7 +107,7 @@ const handleUpdateUserRole = async (req, res) => {
 
   } catch (error) {
     console.error('Error updating user role:', error);
-    
+
     if (error.message === 'User not found') {
       return res.status(404).json({
         success: false,

@@ -1,4 +1,4 @@
-const prisma = require('../../prisma/client');
+const prisma = require('../../../prisma/client');
 
 /**
  * Generate unique order number
@@ -55,7 +55,7 @@ HOW IT WORKS:
 
 USAGE EXAMPLE:
 ```javascript
-const { generateOrderNumber } = require('../utils/order/orderNumber');
+const { generateOrderNumber } = require('./orderNumber');
 const orderNumber = await generateOrderNumber(); // Returns: "PF-2024-000123"
 ```
 

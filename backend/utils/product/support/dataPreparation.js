@@ -190,7 +190,7 @@ DATA TRANSFORMATION RULES:
 
 USAGE EXAMPLES:
 ```javascript
-const { prepareProductData, prepareUpdateData } = require('../utils/product/dataPreparation');
+const { prepareProductData, prepareUpdateData } = require('./dataPreparation');
 
 // For product creation
 const productData = prepareProductData(req.body, generatedSlug, userId);

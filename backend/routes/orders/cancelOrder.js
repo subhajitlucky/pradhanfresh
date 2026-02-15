@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const requireAuth = require('../../middleware/requireAuth');
 const { getOrderStatusInfo } = require('../../utils/orderUtils');
-const { cancelOrder } = require('../../utils/order/orderOperations');
+const { cancelOrder } = require('../../utils/order/operations/orderOperations');
 
 // PUT /api/orders/:orderNumber/cancel - Cancel order (User)
 router.put('/:orderNumber/cancel', requireAuth, async (req, res) => {

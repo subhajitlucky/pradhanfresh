@@ -4,8 +4,8 @@ const prisma = require('../../prisma/client');
 const requireAuth = require('../../middleware/requireAuth');
 const requireAdmin = require('../../middleware/requireAdmin');
 const { validatePricing, validateCategory, validateStock, validateSKUUniqueness } = require('../../utils/product/validation');
-const { generateUniqueSlug } = require('../../utils/product/slug');
-const { prepareUpdateData } = require('../../utils/product/dataPreparation');
+const { generateUniqueSlug } = require('../../utils/product/support/slug');
+const { prepareUpdateData } = require('../../utils/product/support/dataPreparation');
 
 // PUT /api/products/:id - Update existing product (Admin only)
 router.put('/:id', requireAuth, requireAdmin, async (req, res) => {

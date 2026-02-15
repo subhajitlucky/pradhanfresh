@@ -1,6 +1,10 @@
-/* Main CSS Entry Point - Organized Imports */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* 1. Base Styles (loaded first) */
+/* Main CSS Entry Point */
+
+/* 1. Base Styles */
 @import './base/global.css';
 
 /* 2. Component Styles */
@@ -16,8 +20,8 @@
 @import './products/Products.css';
 @import './products/ProductDetail.css';
 
-/* 4. Legacy app styles (will be gradually moved to appropriate files) */
+/* 5. Legacy app styles */
 @import './pages/app.css';
 @import './pages/about.css';
 @import './pages/contact.css';
-@import './pages/home.css'; 
+@import './pages/home.css';

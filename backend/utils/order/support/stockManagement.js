@@ -1,4 +1,4 @@
-const prisma = require('../../prisma/client');
+const prisma = require('../../../prisma/client');
 
 /**
  * Update product stock after order
@@ -67,7 +67,7 @@ OPERATION TYPES:
 
 USAGE EXAMPLES:
 ```javascript
-const { updateProductStock } = require('../utils/order/stockManagement');
+const { updateProductStock } = require('./stockManagement');
 
 // When order is confirmed - reduce stock
 const orderItems = [

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const requireAuth = require('../../middleware/requireAuth');
 const { getOrderStatusInfo } = require('../../utils/orderUtils');
-const { getCompleteOrder } = require('../../utils/order/orderOperations');
+const { getCompleteOrder } = require('../../utils/order/operations/orderOperations');
 
 // GET /api/orders/:orderNumber - Get specific order details
 router.get('/:orderNumber', requireAuth, async (req, res) => {

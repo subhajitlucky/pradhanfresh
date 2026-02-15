@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 
 // Context Providers
 import { CartProvider } from './context/CartContext';
@@ -13,6 +14,7 @@ import Contact from './pages/public/Contact';
 
 // Cart Pages
 import Cart from './pages/cart/Cart';
+import Checkout from './pages/checkout/Checkout';
 
 // Auth Pages  
 import Signup from './pages/auth/Signup';
@@ -33,9 +35,9 @@ function App() {
   return (
     <Router>
       <CartProvider>
-        <div className="app-container">
+        <div className="min-h-screen flex flex-col bg-white">
           <Navbar />
-          <main className="app-main">
+          <main className="flex-grow">
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Home />} />
@@ -44,7 +46,8 @@ function App() {
               <Route path="/products/:id" element={<ProductDetail />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/cart" element={<Cart />} />
-              
+              <Route path="/checkout" element={<Checkout />} />
+
               {/* Auth Routes */}
               <Route path="/signup" element={<Signup />} />
               <Route path="/login" element={<Login />} />
@@ -52,8 +55,9 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password/:token" element={<ResetPassword />} />
               <Route path="/email-verified/:token" element={<EmailVerified />} />
-              
+
               {/* Admin Routes */}
+              <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/products" element={<AdminDashboard />} />
               <Route path="/admin/products/new" element={<AdminProductForm />} />
@@ -61,14 +65,7 @@ function App() {
               <Route path="/admin/categories" element={<AdminDashboard />} />
             </Routes>
           </main>
-          <footer className="app-footer">
-            <div className="app-footer-content">
-             
-              <div className="app-footer-divider"></div>
-              <p className="app-footer-copyright">&copy; 2023 PradhanFresh. All rights reserved.</p>
-              <p className="app-footer-tagline">Bringing fresh, local produce to your doorstep.</p>
-            </div>
-          </footer>
+          <Footer />
         </div>
       </CartProvider>
     </Router>
@@ -76,4 +73,3 @@ function App() {
 }
 
 export default App;
-
