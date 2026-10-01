@@ -1,126 +1,267 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Mail, Lock, ArrowRight, ShieldCheck, ShoppingBasket } from 'lucide-react';
-import api from '../../utils/api';
-import { useAuthStore } from '../../context/authStore';
+import type { FormEvent } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ArrowRight, Eye, EyeOff, Lock, Mail, MailCheck, ShieldCheck, Sprout, Truck } from 'lucide-react';
+import { Button, IconButton } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Field';
+import { ProseImage } from '../../components/ui/Surface';
+import { ApiError } from '../../lib/api';
+import { useAuth } from '../../lib/auth';
+import { errText } from '../../lib/catalog';
 
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const { setAuth } = useAuthStore();
+/* -------------------------------------------------------------------------- */
+/*  Helpers                                                                    */
+/* -------------------------------------------------------------------------- */
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-    try {
-      const response = await api.post('/auth/login', { email, password });
-      const { user, token } = response.data;
-      setAuth(user, token);
-      navigate('/profile');
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { error?: string } } };
-      setError(axiosErr.response?.data?.error || 'Login failed. Please check your credentials.');
-    } finally {
-      setLoading(false);
-    }
-  };
+/**
+ * RequireAuth parks the visitor here and remembers where they were headed.
+ * Only same-site paths are honoured so the redirect can never leave the app.
+ */
+function redirectTarget(state: unknown): string {
+  if (state && typeof state === 'object' && 'from' in state) {
+    const from = (state as { from?: unknown }).from;
+    if (typeof from === 'string' && from.startsWith('/') && !from.startsWith('//')) return from;
+  }
+  return '/profile';
+}
 
+const TRUST = [
+  { Icon: Truck, title: 'Free delivery over ₹500', note: 'Same-morning slots across Pune.' },
+  { Icon: Sprout, title: '200+ local farms', note: 'Picked at dawn, never machine-sorted.' },
+  { Icon: ShieldCheck, title: 'Your orders stay yours', note: 'One account, one honest ledger.' },
+];
+
+/* -------------------------------------------------------------------------- */
+/*  Brand panel — duplicated per auth screen so the family looks identical      */
+/* -------------------------------------------------------------------------- */
+
+function HarvestPanel() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50/50 px-4 pt-20">
-      {/* Background Blobs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-100/50 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-100/50 rounded-full blur-[120px] animate-pulse" />
+    <aside
+      aria-hidden
+      className="hidden flex-col justify-between gap-10 bg-paper-ink px-10 py-14 text-paper lg:flex xl:px-16 xl:py-16"
+    >
+      <div className="stagger" style={{ '--i': 0 } as never}>
+        <p className="font-mono text-[0.625rem] uppercase tracking-[0.28em] text-citrus">
+          Est. 1974 · Pune
+        </p>
+        <p className="mt-6 max-w-md font-display text-[2.75rem] font-semibold leading-[1.02] text-paper">
+          The harvest ledger, kept by hand since 1974.
+        </p>
+        <p className="mt-5 max-w-sm text-[0.9375rem] leading-relaxed text-paper/70">
+          Every crate that leaves our yard is weighed, dated and signed for. Your account keeps the
+          same ledger for your own orders.
+        </p>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-md"
-      >
-        <div className="bg-white/80 backdrop-blur-2xl p-10 md:p-12 rounded-[56px] border border-white shadow-2xl shadow-primary-100/30 italic">
-          <div className="flex flex-col items-center mb-10 text-center">
-            <div className="w-16 h-16 bg-primary-600 rounded-[20px] flex items-center justify-center text-white mb-6 shadow-xl shadow-primary-200">
-              <ShoppingBasket size={32} />
-            </div>
-            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Welcome Back</h2>
-            <p className="text-sm font-bold text-gray-400 mt-2">Log in to your fresh account</p>
-          </div>
+      <div className="stagger flex flex-col items-center gap-5" style={{ '--i': 1 } as never}>
+        <ProseImage
+          src="/mark.svg"
+          alt=""
+          loading="eager"
+          className="duotone size-44 rounded-full border border-paper/15 bg-paper-ink"
+        />
+        <p className="font-mono text-[0.625rem] uppercase tracking-[0.22em] text-paper/50">
+          Day 1 · The first ledger book
+        </p>
+      </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <div className="relative group">
-                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-600 transition-colors" size={20} />
-                <input
-                  type="email"
-                  placeholder="Email Address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-14 pr-6 py-5 rounded-2xl bg-gray-50/50 border border-gray-100 focus:bg-white focus:border-primary-100 focus:ring-4 focus:ring-primary-50 outline-none transition-all font-bold placeholder:text-gray-300"
-                  required
-                />
-              </div>
-            </div>
+      <ul className="stagger space-y-4" style={{ '--i': 2 } as never}>
+        {TRUST.map(({ Icon, title, note }) => (
+          <li key={title} className="flex items-start gap-3.5">
+            <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-md border border-paper/20 bg-paper/5 text-ember">
+              <Icon className="size-4" aria-hidden strokeWidth={1.8} />
+            </span>
+            <span>
+              <span className="block text-sm font-medium text-paper">{title}</span>
+              <span className="block text-xs leading-snug text-paper/60">{note}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </aside>
+  );
+}
 
-            <div className="space-y-2">
-              <div className="relative group">
-                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-600 transition-colors" size={20} />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-14 pr-6 py-5 rounded-2xl bg-gray-50/50 border border-gray-100 focus:bg-white focus:border-primary-100 focus:ring-4 focus:ring-primary-50 outline-none transition-all font-bold placeholder:text-gray-300"
-                  required
-                />
-              </div>
-            </div>
+/* -------------------------------------------------------------------------- */
+/*  Page                                                                       */
+/* -------------------------------------------------------------------------- */
 
-            <div className="flex items-center justify-between px-2">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input type="checkbox" className="w-5 h-5 rounded-lg border-gray-200 text-primary-600 focus:ring-primary-500" />
-                <span className="text-xs font-bold text-gray-400 group-hover:text-gray-600 transition-colors">Remember me</span>
-              </label>
-              <Link to="/forgot-password" title="Forgot password" className="text-xs font-bold text-primary-600 hover:underline">Forgot password?</Link>
-            </div>
+export default function Login() {
+  const login = useAuth((s) => s.login);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="bg-red-50 text-red-500 p-4 rounded-xl text-xs font-bold text-center border border-red-100"
-              >
-                {error}
-              </motion.div>
-            )}
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [reveal, setReveal] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [unverified, setUnverified] = useState(false);
+  const [pending, setPending] = useState(false);
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-5 bg-primary-600 text-white rounded-3xl font-black text-lg shadow-2xl shadow-primary-200 hover:bg-primary-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-3"
-            >
-              {loading ? 'Authenticating...' : 'Sign In'} <ArrowRight size={22} />
-            </button>
-          </form>
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (pending) return; // guards a double click while the request is in flight
 
-          <p className="mt-10 text-center text-sm font-bold text-gray-400">
-            New to PradhanFresh? <Link to="/signup" className="text-primary-600 hover:underline">Create account</Link>
+    const next: { email?: string; password?: string } = {};
+    if (!email.trim()) next.email = 'Enter the email you signed up with.';
+    else if (!EMAIL_RE.test(email.trim())) next.email = 'That does not look like an email address.';
+    if (!password) next.password = 'Enter your password.';
+    setFieldErrors(next);
+    if (next.email || next.password) return;
+
+    setPending(true);
+    setFormError(null);
+    setUnverified(false);
+
+    try {
+      await login(email.trim(), password);
+      navigate(redirectTarget(location.state), { replace: true });
+    } catch (err) {
+      setFormError(errText(err, 'We could not sign you in. Please try again.'));
+      if (err instanceof ApiError && err.isForbidden) setUnverified(true);
+      setPassword('');
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="grid lg:min-h-[36rem] lg:grid-cols-[1.05fr_minmax(0,1fr)]">
+      <HarvestPanel />
+
+      <section className="flex items-center justify-center px-5 py-14 sm:px-8 lg:py-20">
+        <div className="w-full max-w-[26rem]">
+          <span className="eyebrow">Sign in</span>
+          <h1 className="mt-4 text-4xl leading-[1.03] sm:text-[2.75rem]">
+            Welcome back to the yard.
+          </h1>
+          <p className="mt-3 text-[0.9375rem] leading-relaxed text-ink-2">
+            Sign in to see your crates, addresses and every order you have placed with us.
           </p>
 
-          <div className="mt-12 pt-8 border-t border-gray-100 flex items-center justify-center gap-4 text-gray-300">
-            <ShieldCheck size={18} />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] leading-none">Secure Global Infrastructure</span>
-          </div>
+          <form className="mt-8 space-y-4" noValidate onSubmit={onSubmit}>
+            {formError && (
+              <p
+                role="alert"
+                className="rounded-md border border-bad/30 bg-ember-soft px-4 py-3 text-sm leading-relaxed text-bad"
+              >
+                {formError}
+              </p>
+            )}
+
+            {unverified && (
+              <div className="rounded-md border border-citrus-line bg-citrus-soft p-4">
+                <p className="flex items-center gap-2 font-mono text-[0.6875rem] font-medium uppercase tracking-[0.16em] text-warn">
+                  <MailCheck className="size-4 shrink-0" aria-hidden />
+                  Email not verified
+                </p>
+                <p className="mt-2.5 text-sm leading-relaxed text-ink-2">
+                  Your account exists, but sign-in stays closed until the address is verified. Open
+                  the link we emailed you when you registered — it opens{' '}
+                  <span className="font-mono text-xs text-ink">pradhanfresh…/verify-email?token=…</span>
+                </p>
+                <p className="mt-2.5 text-sm leading-relaxed text-ink-2">
+                  We have no &ldquo;resend&rdquo; button on the login screen, so if that link expired or
+                  the mail never arrived, ask us to post a fresh one at{' '}
+                  <Link to="/contact" className="wipe font-medium text-ember">
+                    the market counter
+                  </Link>
+                  .
+                </p>
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="mt-1 -ml-3.5"
+                  onClick={() => {
+                    setUnverified(false);
+                    setFormError(null);
+                  }}
+                >
+                  Use a different account
+                </Button>
+              </div>
+            )}
+
+            <Input
+              name="email"
+              type="email"
+              label="Email address"
+              autoComplete="email"
+              inputMode="email"
+              required
+              icon={<Mail className="size-4" aria-hidden />}
+              placeholder="you@example.com"
+              value={email}
+              error={fieldErrors.email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (fieldErrors.email) setFieldErrors((f) => ({ ...f, email: undefined }));
+              }}
+            />
+
+            <div className="flex items-end gap-2">
+              <Input
+                containerClassName="min-w-0 flex-1"
+                name="password"
+                type={reveal ? 'text' : 'password'}
+                label="Password"
+                autoComplete="current-password"
+                required
+                icon={<Lock className="size-4" aria-hidden />}
+                placeholder="Your market password"
+                value={password}
+                error={fieldErrors.password}
+                aside={
+                  <Link to="/forgot-password" className="wipe font-medium text-ember">
+                    Forgot password?
+                  </Link>
+                }
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (fieldErrors.password) setFieldErrors((f) => ({ ...f, password: undefined }));
+                }}
+              />
+              <IconButton
+                label={reveal ? 'Hide password' : 'Show password'}
+                onClick={() => setReveal((v) => !v)}
+                aria-pressed={reveal}
+                className="mb-[1px] shrink-0"
+              >
+                {reveal ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
+              </IconButton>
+            </div>
+
+            <Button
+              type="submit"
+              variant="ember"
+              size="lg"
+              full
+              loading={pending}
+              disabled={pending}
+              rightIcon={<ArrowRight className="size-4" aria-hidden />}
+            >
+              {pending ? 'Opening the ledger…' : 'Sign in'}
+            </Button>
+
+            <p role="status" aria-live="polite" className="sr-only">
+              {pending ? 'Signing you in, please wait.' : ''}
+            </p>
+          </form>
+
+          <p className="mt-8 border-t border-rule pt-5 text-sm leading-relaxed text-ink-3">
+            First time at the counter?{' '}
+            <Link to="/signup" className="wipe font-medium text-ember">
+              Create an account
+            </Link>{' '}
+            — it takes a minute and a verified inbox.
+          </p>
         </div>
-      </motion.div>
+      </section>
     </div>
   );
-};
-
-export default Login;
+}

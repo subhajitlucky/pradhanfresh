@@ -19,9 +19,12 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+      // `useToast` is colocated with <ToastProvider> on purpose — splitting it
+      // into its own module would mean 12 import-site edits for a Fast Refresh
+      // hint. Everything else in the barrel is a component.
       'react-refresh/only-export-components': [
         'warn',
-        { allowConstantExport: true },
+        { allowConstantExport: true, allowExportNames: ['useToast'] },
       ],
     },
   },

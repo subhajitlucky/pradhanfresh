@@ -1,75 +1,185 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import Navbar from './components/layout/Navbar';
+import Footer from './components/layout/Footer';
+import ErrorBoundary from './components/layout/ErrorBoundary';
+import {
+  CartLifecycle,
+  RedirectIfAuthed,
+  RequireAdmin,
+  RequireAuth,
+  RouteEffects,
+} from './components/layout/routing';
+import { ToastProvider } from './components/ui/Feedback';
 
-// Context Providers
-import { CartProvider } from './context/CartContext';
+// Public
+const Home = lazy(() => import('./pages/Home'));
+const About = lazy(() => import('./pages/About'));
+const Contact = lazy(() => import('./pages/Contact'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
-// Public Pages
-import Home from './pages/public/Home';
-import About from './pages/public/About';
-import Products from './pages/products/Products';
-import ProductDetail from './pages/products/ProductDetail';
-import Contact from './pages/public/Contact';
+// Shop
+const Products = lazy(() => import('./pages/products/Products'));
+const ProductDetail = lazy(() => import('./pages/products/ProductDetail'));
+const Cart = lazy(() => import('./pages/cart/Cart'));
+const Checkout = lazy(() => import('./pages/checkout/Checkout'));
 
-// Cart Pages
-import Cart from './pages/cart/Cart';
-import Checkout from './pages/checkout/Checkout';
+// Account
+const Orders = lazy(() => import('./pages/orders/Orders'));
+const OrderDetail = lazy(() => import('./pages/orders/OrderDetail'));
+const Login = lazy(() => import('./pages/auth/Login'));
+const Signup = lazy(() => import('./pages/auth/Signup'));
+const Profile = lazy(() => import('./pages/auth/Profile'));
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
+const VerifyEmail = lazy(() => import('./pages/auth/VerifyEmail'));
 
-// Auth Pages  
-import Signup from './pages/auth/Signup';
-import Login from './pages/auth/Login';
-import Profile from './pages/auth/Profile';
-import ForgotPassword from './pages/auth/ForgotPassword';
-import ResetPassword from './pages/auth/ResetPassword';
-import EmailVerified from './pages/auth/EmailVerified';
+// Admin
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const AdminProductForm = lazy(() => import('./pages/admin/ProductForm'));
 
-// Admin Pages
-import AdminDashboard from './pages/admin/Dashboard';
-import AdminProductForm from './pages/admin/ProductForm';
-
-// Organized Styles
-import './styles/index.css';
-
-function App() {
+function RouteFallback() {
   return (
-    <Router>
-      <CartProvider>
-        <div className="min-h-screen flex flex-col bg-white">
-          <Navbar />
-          <main className="flex-grow">
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Home />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/products/:id" element={<ProductDetail />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-
-              {/* Auth Routes */}
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password/:token" element={<ResetPassword />} />
-              <Route path="/email-verified/:token" element={<EmailVerified />} />
-
-              {/* Admin Routes */}
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/products" element={<AdminDashboard />} />
-              <Route path="/admin/products/new" element={<AdminProductForm />} />
-              <Route path="/admin/products/edit/:id" element={<AdminProductForm />} />
-              <Route path="/admin/categories" element={<AdminDashboard />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-      </CartProvider>
-    </Router>
+    <div className="grid min-h-[60vh] place-items-center">
+      <p className="font-mono text-[0.6875rem] uppercase tracking-[0.25em] text-ink-3">
+        Loading…
+      </p>
+    </div>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ToastProvider>
+          <CartLifecycle />
+          <div className="relative z-[1] flex min-h-dvh flex-col">
+            <Navbar />
+            <main id="main" className="flex-1 outline-none">
+              <RouteEffects>
+                <Suspense fallback={<RouteFallback />}>
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/contact" element={<Contact />} />
+
+                    <Route path="/products" element={<Products />} />
+                    <Route path="/products/:id" element={<ProductDetail />} />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route
+                      path="/checkout"
+                      element={
+                        <RequireAuth>
+                          <Checkout />
+                        </RequireAuth>
+                      }
+                    />
+
+                    <Route
+                      path="/orders"
+                      element={
+                        <RequireAuth>
+                          <Orders />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/orders/:orderNumber"
+                      element={
+                        <RequireAuth>
+                          <OrderDetail />
+                        </RequireAuth>
+                      }
+                    />
+
+                    <Route
+                      path="/login"
+                      element={
+                        <RedirectIfAuthed>
+                          <Login />
+                        </RedirectIfAuthed>
+                      }
+                    />
+                    <Route
+                      path="/signup"
+                      element={
+                        <RedirectIfAuthed>
+                          <Signup />
+                        </RedirectIfAuthed>
+                      }
+                    />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/verify-email" element={<VerifyEmail />} />
+                    <Route
+                      path="/profile"
+                      element={
+                        <RequireAuth>
+                          <Profile />
+                        </RequireAuth>
+                      }
+                    />
+
+                    {/* Admin. The dashboard reads the path to pick its initial tab. */}
+                    <Route
+                      path="/admin"
+                      element={
+                        <RequireAdmin>
+                          <AdminDashboard />
+                        </RequireAdmin>
+                      }
+                    />
+                    <Route
+                      path="/admin/products"
+                      element={
+                        <RequireAdmin>
+                          <AdminDashboard />
+                        </RequireAdmin>
+                      }
+                    />
+                    <Route
+                      path="/admin/categories"
+                      element={
+                        <RequireAdmin>
+                          <AdminDashboard />
+                        </RequireAdmin>
+                      }
+                    />
+                    <Route
+                      path="/admin/orders"
+                      element={
+                        <RequireAdmin>
+                          <AdminDashboard />
+                        </RequireAdmin>
+                      }
+                    />
+                    <Route
+                      path="/admin/products/new"
+                      element={
+                        <RequireAdmin>
+                          <AdminProductForm />
+                        </RequireAdmin>
+                      }
+                    />
+                    <Route
+                      path="/admin/products/edit/:id"
+                      element={
+                        <RequireAdmin>
+                          <AdminProductForm />
+                        </RequireAdmin>
+                      }
+                    />
+
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </RouteEffects>
+            </main>
+            <Footer />
+          </div>
+        </ToastProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
+  );
+}

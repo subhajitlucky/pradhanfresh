@@ -1,227 +1,125 @@
-# 🥬 PradhanFresh - Fresh Produce E-commerce Platform
+# 🥬 PradhanFresh — Fresh Produce E-commerce Platform
 
-![Overall Progress](https://img.shields.io/badge/Overall_Progress-60%25-green?style=for-the-badge)
-![Backend](https://img.shields.io/badge/Backend-90%25-green?style=for-the-badge)
-![Frontend](https://img.shields.io/badge/Frontend-85%25-green?style=for-the-badge)
-![E-commerce Core](https://img.shields.io/badge/E--commerce_Core-55%25-yellow?style=for-the-badge)
+A family-owned market platform bringing hand-picked fruits and vegetables from 200+ local
+partner farms to your table. Harvested at dawn, delivered by noon.
 
-> 🚀 A modern, scalable e-commerce platform for fresh fruits and vegetables delivery built with React, TypeScript, Node.js, and PostgreSQL.
+| | |
+| --- | --- |
+| **Frontend** | Vite · React 19 · TypeScript · Tailwind v4 · React Query · Zustand |
+| **Backend** | Express 5 · Prisma · PostgreSQL · JWT |
+| **Design system** | [DESIGN_SYSTEM.md](frontend/DESIGN_SYSTEM.md) — "Harvest Ledger" |
+| **Frontend audit** | [FRONTEND_AUDIT.md](FRONTEND_AUDIT.md) — findings, fixes, verification |
+| **API reference** | [API_REFERENCE.md](API_REFERENCE.md) — every route, envelope and gotcha |
 
-## 📊 Project Progress Dashboard
+---
 
-### 🎯 Overall Completion: **20%**
+## Status
+
+| Area | State |
+| --- | --- |
+| Authentication & security | ✅ JWT access + refresh, email verification, password reset, RBAC, rate limiting |
+| Catalogue | ✅ 18 routes, URL-driven search/filter/sort/pagination |
+| Basket & checkout | ✅ optimistic cart, 3-step checkout, order placement |
+| Orders | ✅ history, detail, status tracker, cancel, reorder |
+| Account | ✅ profile, password, address book |
+| Admin | ✅ revenue/orders/customers, SVG sales chart, inventory CRUD, low stock, order status |
+| Accessibility | ✅ WCAG AA verified (563/563 sampled text nodes) |
+| Payments | ⚠️ Stripe webhook exists; the checkout payment step is COD-first |
+| Reviews & ratings | ❌ no backend — deliberately not faked in the UI |
+
+> The frontend was fully overhauled on 2026-09-30. It previously shipped with **Tailwind
+> never running** (the site rendered unstyled), **no authenticated request working**, and
+> **checkout that never created an order**. See [FRONTEND_AUDIT.md](FRONTEND_AUDIT.md).
+
+---
+
+## Quick start
+
+### Frontend — no database needed
+
+A mock API ships with the repo that speaks the real backend's exact response envelopes.
+
+```bash
+cd frontend
+npm install
+npm run mock     # http://localhost:5000 — 14 products, 5 orders, live cart
+npm run dev      # http://localhost:5173
+```
+
+Sign in with `user@test.com` (any password) to reach the basket, orders, checkout and admin.
+
+### Frontend — against the real backend
+
+```bash
+cd frontend
+npm install
+VITE_API_ORIGIN=http://localhost:5000 npm run dev
+```
+
+### Backend
+
+```bash
+cd backend
+npm install
+cp .env.example .env      # fill in DATABASE_URL, JWT secrets, SMTP, STRIPE_SECRET_KEY
+npx prisma migrate dev
+npm run dev               # http://localhost:5000
+```
+
+Seeded accounts: `admin@pradhanfresh.com / admin123` (ADMIN), `user@test.com / user123` (USER).
+
+### Checks
+
+```bash
+cd frontend
+npm run lint       # 0 errors, 0 warnings
+npx tsc -b         # clean
+npm run build      # per-route code splitting
+npm run preview
+```
+
+---
+
+## Project layout
 
 ```
-Authentication & Security  █████████████████████████ 100%
-Frontend Foundation       █████████████████████████ 100%
-Backend Infrastructure    █████████████████████████ 100%
-E-commerce Core          ██████████████░░░░░░░░░░░░ 55%
-Payment System           ░░░░░░░░░░░░░░░░░░░░░░░░░░  0%
-Admin Dashboard          ░░░░░░░░░░░░░░░░░░░░░░░░░░  0%
-Analytics & Reports      ░░░░░░░░░░░░░░░░░░░░░░░░░░  0%
+backend/
+  prisma/           schema, migrations, seed
+  routes/           auth · products · cart · orders · user · admin · upload · webhooks
+  middleware/       requireAuth · requireAdmin · rateLimiter
+  tests/            per-route integration tests
+
+frontend/
+  src/
+    lib/            api (normalised client + token refresh) · auth · cart ·
+                    catalog (React Query hooks) · format · hooks · types
+    components/
+      ui/           Button · Field · Feedback · Surface      ← the primitives
+      layout/       Navbar (live basket drawer) · Footer · routing guards · ErrorBoundary
+      product/      ProductCard · ProductGrid
+    pages/          18 routes, lazily code-split
+    styles/
+      index.css     the entire "Harvest Ledger" design system (@theme tokens)
+  tools/
+    mock-api.mjs    dependency-free mock of the real API
+  DESIGN_SYSTEM.md  the contract every page follows
 ```
 
 ---
 
-## ✅ Completed Features
+## Known backend defects
 
-### 🔐 **Authentication & Security (80% Complete)**
-- ✅ User Registration with Email Verification
-- ✅ Secure Login/Logout System
-- ✅ JWT Token-based Authentication
-- ✅ Password Reset Functionality
-- ✅ Role-based Access Control (USER/ADMIN)
-- ✅ Refresh Token System
-- ✅ Security Middleware (Helmet, CORS, Rate Limiting)
-- ✅ Protected Routes & Authorization
+Order placement and order detail currently fail at runtime because the code references Prisma
+models and columns that are not in `schema.prisma` (`orderStatusHistory`, `Order.cancellationReason`,
+`User.phone`, and `OrderItem.create` omitting required `productName`/`productSku`/`unit`).
+There is also no address-update endpoint — `routes/user/index.js` mounts `addresses.js`, so
+`address.js` is dead code.
 
-### 🎨 **Frontend Foundation (60% Complete)**
-- ✅ React 18 + TypeScript + Vite Setup
-- ✅ Modern UI Components
-- ✅ Responsive Design
-- ✅ React Router Navigation
-- ✅ Authentication Context
-- ✅ API Integration Layer
-- ✅ Complete Page Structure (Home, About, Products, Contact, Profile)
-- ✅ Modern Styling Architecture
-
-### ⚙️ **Backend Infrastructure (75% Complete)**
-- ✅ Express.js Server with TypeScript Support
-- ✅ PostgreSQL Database with Prisma ORM
-- ✅ RESTful API Architecture
-- ✅ Email Service Integration
-- ✅ Environment Configuration
-- ✅ Database Migrations System
-- ✅ Error Handling & Logging
+The frontend surfaces these honestly instead of faking success. The full list, with file
+references, is in [FRONTEND_AUDIT.md §6](FRONTEND_AUDIT.md).
 
 ---
 
-## 🚧 In Development / Planned Features
+## License
 
-### 🛒 **E-commerce Core (5% Complete)**
-- ❌ Product Management System
-- ❌ Shopping Cart Functionality
-- ❌ Checkout Process
-- ❌ Order Management
-- ❌ Inventory Tracking
-- ❌ Product Search & Filtering
-- ❌ Product Reviews & Ratings
-
-### 💳 **Payment & Orders (0% Complete)**
-- ❌ Stripe Payment Integration
-- ❌ Multiple Payment Methods
-- ❌ Order Processing Workflow
-- ❌ Order Status Tracking
-- ❌ Refund System
-- ❌ Invoice Generation
-
-### 👨‍💼 **Admin Features (0% Complete)**
-- ❌ Admin Dashboard UI
-- ❌ User Management Interface
-- ❌ Product Management Interface
-- ❌ Order Management System
-- ❌ Analytics Dashboard
-- ❌ Content Management
-
-### 📊 **Analytics & Business Intelligence (0% Complete)**
-- ❌ Sales Analytics
-- ❌ Customer Behavior Tracking
-- ❌ Inventory Reports
-- ❌ Revenue Dashboard
-- ❌ Performance Metrics
-
----
-
-## 🏗️ **Phase Breakdown**
-
-| Phase | Description | Status | Completion |
-|-------|-------------|--------|------------|
-| **Phase 1** | Core Infrastructure & Authentication | 🟢 **In Progress** | 80% |
-| **Phase 2** | Core E-commerce Functionality | 🔴 **Planned** | 5% |
-| **Phase 3** | Advanced Features & UX | 🔴 **Planned** | 0% |
-| **Phase 4** | Multi-vendor Platform | 🔴 **Planned** | 0% |
-| **Phase 5** | Business Intelligence | 🔴 **Planned** | 0% |
-| **Phase 6** | Enterprise Features | 🔴 **Planned** | 0% |
-
----
-
-## 🛠️ **Tech Stack**
-
-### **Backend**
-- **Runtime**: Node.js + Express.js
-- **Database**: PostgreSQL + Prisma ORM
-- **Authentication**: JWT + bcrypt
-- **Email**: Nodemailer
-- **Security**: Helmet, CORS, Rate Limiting
-
-### **Frontend**
-- **Framework**: React 18 + TypeScript
-- **Build Tool**: Vite
-- **Routing**: React Router DOM
-- **HTTP Client**: Axios
-- **Styling**: CSS Modules
-
-### **DevOps**
-- **Version Control**: Git
-- **Package Manager**: npm
-- **Development**: Nodemon
-- **Deployment**: Vercel Ready
-
----
-
-## 🚀 **Quick Start**
-
-### Prerequisites
-- Node.js (v18+)
-- PostgreSQL
-- npm or yarn
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <your-repo-url>
-   cd pradhanfresh
-   ```
-
-2. **Setup Backend**
-   ```bash
-   cd backend
-   npm install
-   # Configure your .env file
-   npx prisma migrate dev
-   npm run dev
-   ```
-
-3. **Setup Frontend**
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-
-4. **Access the application**
-   - Frontend: `http://localhost:5173`
-   - Backend: `http://localhost:5000`
-
----
-
-## 📈 **Next Milestones**
-
-### 🎯 **Immediate Goals (Next 2 weeks)**
-1. **Product Management System** - CRUD operations for products
-2. **Shopping Cart Implementation** - Add to cart, update quantities
-3. **Basic Checkout Flow** - Order creation and management
-
-### 🎯 **Short-term Goals (Next month)**
-1. **Payment Integration** - Stripe payment processing
-2. **Admin Dashboard** - Product and order management UI
-3. **Search & Filtering** - Enhanced product discovery
-
-### 🎯 **Long-term Vision**
-- Multi-vendor marketplace
-- Advanced analytics
-- Mobile app (React Native)
-- AI-powered recommendations
-
----
-
-## 📊 **Key Metrics & KPIs**
-
-| Metric | Target | Current Status |
-|--------|--------|----------------|
-| Authentication System | ✅ Complete | **Achieved** |
-| Core Pages | ✅ Complete | **Achieved** |
-| Product Management | 🎯 Q1 2024 | **Planned** |
-| Payment Integration | 🎯 Q1 2024 | **Planned** |
-| Admin Dashboard | 🎯 Q2 2024 | **Planned** |
-| Mobile App | 🎯 Q3 2024 | **Planned** |
-
----
-
-## 🤝 **Contributing**
-
-This project is actively being developed. Feel free to:
-- 🐛 Report bugs
-- 💡 Suggest features
-- 🔧 Submit pull requests
-- 📖 Improve documentation
-
----
-
-## 📝 **License**
-
-This project is licensed under the MIT License.
-
----
-
-## 🎊 **Acknowledgments**
-
-Built with ❤️ using modern web technologies and best practices.
-
-**Last Updated**: January 2024  
-**Next Review**: February 2024
-
----
-
-*⭐ Star this repository if you find it helpful!* 
+MIT — see [LICENSE](LICENSE).
