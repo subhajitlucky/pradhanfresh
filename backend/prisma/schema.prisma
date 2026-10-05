@@ -20,6 +20,7 @@ model User {
   email                  String    @unique
   password               String
   role                   Role      @default(USER)
+  phone                  String?   // Contact number; also captured per-address at order time
   isEmailVerified        Boolean   @default(false)
   emailVerificationToken String?   @unique
   passwordResetToken     String?   @unique
@@ -30,7 +31,31 @@ model User {
   createdProducts        Product[] @relation("ProductCreator")
   cart                   Cart?     @relation("UserCart")
   orders                 Order[]   @relation("UserOrders")
+  statusChanges          OrderStatusHistory[] @relation("OrderStatusChanges")
   addresses              Address[] @relation("UserAddresses")
+  wishlists              Wishlist[] @relation("UserWishlists")
+}
+
+/// A saved list of products a customer wants to buy later.
+model Wishlist {
+  id        Int            @id @default(autoincrement())
+  user      User           @relation("UserWishlists", fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int            @unique
+  items     WishlistItem[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model WishlistItem {
+  id         Int      @id @default(autoincrement())
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  wishlistId Int
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  Int
+  addedAt    DateTime @default(now())
+
+  @@unique([wishlistId, productId])
+  @@index([productId])
 }
 
 model Address {
@@ -111,6 +136,7 @@ model Product {
   cartItems       CartItem[]
   orderItems      OrderItem[]
   
+  wishlistItems    WishlistItem[]
   @@index([categoryId])
   @@index([isAvailable])
   @@index([isFeatured])
@@ -178,6 +204,7 @@ model Order {
   // Order tracking
   orderNotes      String?     // Special instructions from customer
   adminNotes      String?     // Internal notes for admin
+  cancellationReason String?  // Why the customer cancelled; set when status becomes CANCELLED
   
   // Timestamps
   createdAt       DateTime    @default(now())
@@ -186,11 +213,32 @@ model Order {
   shippedAt       DateTime?   // When order was shipped
   deliveredAt     DateTime?   // When order was delivered
   cancelledAt     DateTime?   // When order was cancelled
-  
+
+  // Audit trail — every status transition is recorded here
+  statusHistory   OrderStatusHistory[]
+
   @@index([userId])
   @@index([status])
   @@index([orderNumber])
   @@index([createdAt])
+}
+
+/// Immutable record of each status transition on an order.
+/// Written by utils/order/operations/{update,cancel}.js.
+model OrderStatusHistory {
+  id        Int         @id @default(autoincrement())
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   Int
+  oldStatus OrderStatus
+  newStatus OrderStatus
+  /// null when the transition was made by the system rather than a signed-in user.
+  changedByUser   User?    @relation("OrderStatusChanges", fields: [changedByUserId], references: [id], onDelete: SetNull)
+  changedByUserId Int?
+  notes     String?
+  changedAt DateTime    @default(now())
+
+  @@index([orderId])
+  @@index([changedByUserId])
 }
 
 model OrderItem {

@@ -5,14 +5,14 @@ const ACCESS_SECRET = process.env.ACCESS_TOKEN_SECRET;
 const requireAuth = (req, res, next) => {
   // ✅ Step 0: Check if ACCESS_SECRET exists
   if (!ACCESS_SECRET) {
-    return res.status(500).json({ error: 'Server configuration error: JWT secret not found' });
+    return res.status(500).json({ success: false, error: 'Server configuration error: JWT secret not found' });
   }
   
   const authHeader = req.headers.authorization;
 
   // ✅ Step 1: Check if token exists
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authorization token required' });
+    return res.status(401).json({ success: false, error: 'Authorization token required' });
   }
 
   const token = authHeader.split(' ')[1];
@@ -26,7 +26,7 @@ const requireAuth = (req, res, next) => {
     next(); // 🔁 go to next middleware or route handler
 
   } catch (error) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    return res.status(401).json({ success: false, error: 'Invalid or expired token' });
   }
 };
 

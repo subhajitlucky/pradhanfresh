@@ -109,13 +109,22 @@ const deleteCategory = async (categoryId) => {
   await prisma.category.delete({
     where: { id: categoryId }
   });
+
+  return category;
 };
 
 /**
  * Get all categories for admin with product counts
  */
-const getCategories = async () => {
-  const categories = await prisma.category.findMany({
+const getCategories = async (params = {}) => {
+  const { page, limit, skip, search } = params;
+
+  const where = search
+    ? { name: { contains: search, mode: 'insensitive' } }
+    : {};
+
+  const findArgs = {
+    where,
     include: {
       _count: {
         select: { products: true }
@@ -124,14 +133,30 @@ const getCategories = async () => {
     orderBy: {
       name: 'asc'
     }
-  });
+  };
+  if (skip !== undefined) findArgs.skip = skip;
+  if (limit !== undefined) findArgs.take = limit;
+
+  const categories = await prisma.category.findMany(findArgs);
 
   const categoriesWithCounts = categories.map(category => ({
     ...category,
     productCount: category._count.products,
   }));
 
-  return categoriesWithCounts;
+  if (page === undefined || limit === undefined) return categoriesWithCounts;
+
+  const total = await prisma.category.count({ where });
+  return {
+    categories: categoriesWithCounts,
+    pagination: {
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      hasNextPage: page < Math.ceil(total / limit),
+      hasPrevPage: page > 1
+    }
+  };
 };
 
 module.exports = {

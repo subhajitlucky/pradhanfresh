@@ -1,8 +1,10 @@
 const request = require('supertest');
 const app = require('../../server');
 const prisma = require('../../prisma/client');
+const { resetDb } = require('../testUtils');
 
 describe('Auth - Signup Tests', () => {
+  beforeAll(resetDb);
   afterEach(async () => {
     // Clean up test data after each test
     await prisma.user.deleteMany({

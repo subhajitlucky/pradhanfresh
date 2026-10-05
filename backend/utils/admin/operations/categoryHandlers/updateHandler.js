@@ -13,14 +13,14 @@ const handleUpdateCategory = async (req, res) => {
   try {
     const idValidation = validateCategoryId(req.params.id);
     if (!idValidation.valid) {
-      return res.status(400).json(idValidation);
+      return res.status(400).json({ success: false, ...idValidation });
     }
 
     const { categoryId } = idValidation.data;
 
     const updateValidation = validateCategoryUpdate(req.body);
     if (!updateValidation.valid) {
-      return res.status(400).json(updateValidation);
+      return res.status(400).json({ success: false, ...updateValidation });
     }
 
     const updatedCategory = await updateCategory(categoryId, updateValidation.data);

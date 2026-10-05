@@ -3,8 +3,10 @@ const app = require('../../server');
 const prisma = require('../../prisma/client');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { resetDb } = require('../testUtils');
 
 describe('Order - Get Orders Tests', () => {
+  beforeAll(resetDb);
   let testUser;
   let anotherUser;
   let userToken;
@@ -21,7 +23,7 @@ describe('Order - Get Orders Tests', () => {
         name: 'Test User',
         email: 'testuser@example.com',
         password: hashedPassword,
-        role: 'user',
+        role: 'USER',
         isEmailVerified: true,
       },
     });
@@ -31,7 +33,7 @@ describe('Order - Get Orders Tests', () => {
         name: 'Another User',
         email: 'anotheruser@example.com',
         password: hashedPassword,
-        role: 'user',
+        role: 'USER',
         isEmailVerified: true,
       },
     });
@@ -53,6 +55,7 @@ describe('Order - Get Orders Tests', () => {
     testCategory = await prisma.category.create({
       data: {
         name: 'Test Category',
+        slug: 'test-category',
         description: 'Test category for orders',
       },
     });
@@ -165,6 +168,10 @@ describe('Order - Get Orders Tests', () => {
         data: {
           orderId: order.id,
           productId: testProduct.id,
+          productName: testProduct.name,
+          productSku: testProduct.sku,
+          unit: testProduct.unit,
+          thumbnail: testProduct.thumbnail,
           quantity: 2,
           price: testProduct.price,
           subtotal: 200,

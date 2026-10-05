@@ -41,6 +41,7 @@ const validateDeliveryDetails = (delivery) => {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0); // compare calendar dates, not timestamps
 
     if (selectedDate < tomorrow) {
       return {

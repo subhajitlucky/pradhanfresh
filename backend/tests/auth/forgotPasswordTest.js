@@ -2,8 +2,10 @@ const request = require('supertest');
 const app = require('../../server');
 const prisma = require('../../prisma/client');
 const bcrypt = require('bcrypt');
+const { resetDb } = require('../testUtils');
 
 describe('Auth - Forgot Password Tests', () => {
+  beforeAll(resetDb);
   let testUser;
 
   beforeEach(async () => {
@@ -86,15 +88,16 @@ describe('Auth - Forgot Password Tests', () => {
       expect(response.body.error).toBe('An error occurred while processing your request.');
     });
 
-    test('should fail with empty email', async () => {
+    test('should not reveal account existence for empty email', async () => {
       const response = await request(app)
         .post('/api/auth/forgot-password')
         .send({
           email: '',
         });
 
-      expect(response.status).toBe(500);
-      expect(response.body.error).toBe('An error occurred while processing your request.');
+      // Secure pattern: same generic 200 response regardless of account existence
+      expect(response.status).toBe(200);
+      expect(response.body.message).toContain('If an account with that email exists');
     });
 
     test('should update existing reset token if user requests again', async () => {

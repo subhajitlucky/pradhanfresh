@@ -21,12 +21,12 @@ router.post('/', async (req, res) => {
   // Email format validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    return res.status(400).json({ error: 'Invalid email format.' });
+    return res.status(400).json({ success: false, error: 'Invalid email format.' });
   }
 
   // Password validation (minimum 6 characters)
   if (password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+    return res.status(400).json({ success: false, error: 'Password must be at least 6 characters long.' });
   }
 
   try {
@@ -36,7 +36,7 @@ router.post('/', async (req, res) => {
     });
 
     if (existingUser) {
-      return res.status(409).json({ error: 'User with this email already exists.' });
+      return res.status(409).json({ success: false, error: 'User with this email already exists.' });
     }
 
     // Hash the password
@@ -73,7 +73,7 @@ router.post('/', async (req, res) => {
 
   } catch (error) {
     console.error('Error during signup:', error);
-    res.status(500).json({ error: 'Internal server error during user creation.' });
+    res.status(500).json({ success: false, error: 'Internal server error during user creation.' });
   }
 });
 

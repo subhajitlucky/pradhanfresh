@@ -277,22 +277,41 @@ Against the real backend, point `VITE_API_ORIGIN` at it.
 
 ---
 
-## 6. Known backend defects (not frontend bugs)
+## 6. Backend defects — now fixed
 
-Found while auditing, surfaced honestly in the UI rather than papered over:
+All of the defects below were **fixed** on 2026-10-01 and verified against a real
+PostgreSQL 16 instance. See [BACKEND_FIXES.md](BACKEND_FIXES.md) for the full write-up,
+including two defects this audit originally reported incorrectly.
 
-| Defect | Effect |
+| Defect | Status |
 | --- | --- |
-| `prisma.orderStatusHistory` referenced but absent from `schema.prisma` | `GET /api/orders/:orderNumber`, cancel and status update return **500** |
-| `Order.cancellationReason` not in schema | cancel always 500 |
-| `OrderItem.create` omits required `productName`/`productSku`/`unit` | `POST /api/orders/create` 500s (transaction rolled back) |
-| `User.phone` in a `select` | order detail 500 |
-| `routes/user/index.js` mounts `./addresses`, not `./address.js` | there is **no** address-update endpoint |
-| Refreshed access token omits `role` | admin UI breaks after a token refresh |
-| Refresh cookie is `secure:true` | dead on plain `http://localhost` |
-| `helmet()` sets `crossOriginResourcePolicy: same-origin` | cross-origin `<img>` from `/uploads` is blocked (`ProseImage` requests in CORS mode) |
-| Wishlist endpoints are stubs | returns `[]`; no wishlist UI was built |
-| Global rate limit 100 req/15 min, 10 on auth | surfaced with real 429 messaging |
+| `prisma.orderStatusHistory` referenced but absent from `schema.prisma` | fixed — model + migration added |
+| `Order.cancellationReason` not in schema | fixed — column added |
+| `OrderItem.create` omits required `productName`/`productSku`/`unit` | fixed — snapshot now populated |
+| `User.phone` in a `select` | fixed — column added |
+| `routes/user/index.js` mounted `./addresses`, leaving `address.js` unreachable | fixed — routes merged, dead file deleted |
+| Refreshed access token omitted `role` | fixed — role re-read from the database |
+| Refresh cookie was `secure:true` | fixed — secure only in production |
+| Wishlist endpoints were stubs | fixed — real `Wishlist`/`WishlistItem` models |
+| Global rate limit 100 req/15 min | fixed — envelope is now JSON, not plain text |
+| `helmet()` CORP `same-origin` blocking `/uploads` images | **not a real defect — see below** |
+| `orderUtils` imported three helpers from the *cart* module | fixed — order creation always 500'd |
+| `utils/user/{validation,operations}` had no `index.js` | fixed — **the server could not boot** |
+| `multer` required but undeclared in `package.json` | fixed — **the server could not boot** |
+| Auth rate limiter counted each request twice | fixed — 10 logins now, not 5 |
 
-These are **backend** fixes. The frontend degrades gracefully and tells the user what is wrong
-rather than showing a false success.
+### Correction: the CORP finding was wrong
+
+This audit originally reported that `helmet()`'s `crossOriginResourcePolicy: same-origin`
+blocked product images on the storefront. **That was incorrect.** `app.use('/uploads',
+express.static('uploads'))` is mounted *before* `app.use(helmet())` in `server.js`, so
+uploaded images never received a CORP header and were never blocked. Verified directly:
+
+```
+CORP headers on /uploads/...  → 0
+CORP headers on /api/products → 1
+```
+
+`crossOriginResourcePolicy: { policy: 'cross-origin' }` is now set explicitly. That is
+defensible hardening — it stops a future reordering of the middleware from silently breaking
+every uploaded photo — but it did **not** fix a live bug, and the original claim was wrong.

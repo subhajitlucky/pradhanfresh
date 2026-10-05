@@ -3,8 +3,10 @@ const app = require('../../server');
 const prisma = require('../../prisma/client');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { resetDb } = require('../testUtils');
 
 describe('Order - Update Order Status Tests', () => {
+  beforeAll(resetDb);
   let adminUser;
   let regularUser;
   let adminToken;
@@ -53,6 +55,7 @@ describe('Order - Update Order Status Tests', () => {
     testCategory = await prisma.category.create({
       data: {
         name: 'Test Category',
+        slug: 'test-category',
         description: 'Test category for orders',
       },
     });
@@ -124,6 +127,10 @@ describe('Order - Update Order Status Tests', () => {
         data: {
           orderId: testOrder.id,
           productId: testProduct.id,
+          productName: testProduct.name,
+          productSku: testProduct.sku,
+          unit: testProduct.unit,
+          thumbnail: testProduct.thumbnail,
           quantity: 2,
           price: testProduct.price,
           subtotal: 200,
@@ -351,8 +358,8 @@ describe('Order - Update Order Status Tests', () => {
         .put(`/api/orders/${testOrder.orderNumber}/status`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          status: 'SHIPPED',
-          adminNotes: 'Order shipped via courier'
+          status: 'CONFIRMED',
+          adminNotes: 'Order confirmed by admin'
         });
 
       expect(response.status).toBe(200);

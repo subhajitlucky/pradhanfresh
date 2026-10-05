@@ -13,7 +13,7 @@ const handleDeleteCategory = async (req, res) => {
   try {
     const idValidation = validateCategoryId(req.params.id);
     if (!idValidation.valid) {
-      return res.status(400).json(idValidation);
+      return res.status(400).json({ success: false, ...idValidation });
     }
 
     const { categoryId } = idValidation.data;
@@ -43,7 +43,7 @@ const handleDeleteCategory = async (req, res) => {
       });
     }
 
-    if (error.message.includes('cannot be deleted')) {
+    if (error.message.toLowerCase().includes('cannot delete')) {
       return res.status(409).json({
         success: false,
         message: error.message,

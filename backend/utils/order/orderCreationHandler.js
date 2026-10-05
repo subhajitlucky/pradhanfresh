@@ -21,7 +21,11 @@ const handleOrderCreation = async (req, res) => {
     // === INPUT VALIDATION ===
     const inputValidation = validateOrderCreationInput(req.body);
     if (!inputValidation.valid) {
-      return res.status(400).json(inputValidation);
+      return res.status(400).json({
+        success: false,
+        message: inputValidation.message,
+        error: inputValidation.error || 'Validation Error',
+      });
     }
 
     // Validate delivery address format
@@ -37,7 +41,11 @@ const handleOrderCreation = async (req, res) => {
     // Validate delivery details
     const deliveryValidation = validateDeliveryDetails({ deliveryDate, deliverySlot });
     if (!deliveryValidation.valid) {
-      return res.status(400).json(deliveryValidation);
+      return res.status(400).json({
+        success: false,
+        message: deliveryValidation.message,
+        error: deliveryValidation.error || 'Validation Error',
+      });
     }
 
     // === GET USER'S CART ===
@@ -50,6 +58,9 @@ const handleOrderCreation = async (req, res) => {
               select: {
                 id: true,
                 name: true,
+                sku: true,
+                thumbnail: true,
+                unit: true,
                 price: true,
                 salePrice: true,
                 stock: true,

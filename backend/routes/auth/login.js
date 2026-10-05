@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const prisma = require('../../prisma/client'); // Import the single, shared instance
+const { setRefreshCookie } = require('../../utils/auth/cookies');
 const router = express.Router();
 
 const ACCESS_SECRET = process.env.ACCESS_TOKEN_SECRET;
@@ -10,28 +11,28 @@ const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET;
 router.post('/', async (req, res) => {
   // ✅ Check if secrets are configured
   if (!ACCESS_SECRET || !REFRESH_SECRET) {
-    return res.status(500).json({ error: 'Server configuration error: Authentication secrets not found' });
+    return res.status(500).json({ success: false, error: 'Server configuration error: Authentication secrets not found' });
   }
 
   const { email, password } = req.body;
 
   // ✅ Input check
   if (!email || !password) {
-    return res.status(400).json({ error: 'All fields required' });
+    return res.status(400).json({ success: false, error: 'All fields required' });
   }
 
   try {
     // ✅ Check user
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(401).json({ error: 'User not found' });
+    if (!user) return res.status(401).json({ success: false, error: 'User not found' });
 
     // ✅ Check if email is verified
     if (!user.isEmailVerified) {
-      return res.status(403).json({ error: 'Please verify your email before logging in.' });
+      return res.status(403).json({ success: false, error: 'Please verify your email before logging in.' });
     }
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ error: 'Wrong password' });
+    if (!match) return res.status(401).json({ success: false, error: 'Wrong password' });
 
     // ✅ Generate Access Token
     const accessToken = jwt.sign(
@@ -47,13 +48,8 @@ router.post('/', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    // ✅ Set Refresh Token in Cookie
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'Strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    // ✅ Set Refresh Token in Cookie (secure only in production)
+    setRefreshCookie(res, refreshToken);
 
     // ✅ Send Access Token
     res.status(200).json({
@@ -64,7 +60,7 @@ router.post('/', async (req, res) => {
 
   } catch (error) {
     console.error('Login Error:', error);
-    res.status(500).json({ error: 'Login failed due to server error' });
+    res.status(500).json({ success: false, error: 'Login failed due to server error' });
   }
 });
 

@@ -3,8 +3,10 @@ const app = require('../../server');
 const prisma = require('../../prisma/client');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const { resetDb } = require('../testUtils');
 
 describe('Auth - Reset Password Tests', () => {
+  beforeAll(resetDb);
   let testUser;
   let resetToken;
   let expiredToken;

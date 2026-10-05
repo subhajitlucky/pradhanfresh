@@ -3,8 +3,10 @@ const app = require('../../server');
 const prisma = require('../../prisma/client');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { resetDb } = require('../testUtils');
 
 describe('Cart - Remove Cart Item Tests', () => {
+  beforeAll(resetDb);
   let testUser;
   let anotherUser;
   let userToken;
@@ -25,7 +27,7 @@ describe('Cart - Remove Cart Item Tests', () => {
         name: 'Test User',
         email: 'testuser@example.com',
         password: hashedPassword,
-        role: 'user',
+        role: 'USER',
         isEmailVerified: true,
       },
     });
@@ -35,7 +37,7 @@ describe('Cart - Remove Cart Item Tests', () => {
         name: 'Another User',
         email: 'anotheruser@example.com',
         password: hashedPassword,
-        role: 'user',
+        role: 'USER',
         isEmailVerified: true,
       },
     });
@@ -57,6 +59,7 @@ describe('Cart - Remove Cart Item Tests', () => {
     testCategory = await prisma.category.create({
       data: {
         name: 'Test Category',
+        slug: 'test-category',
         description: 'Test category for cart tests',
       },
     });
@@ -110,6 +113,7 @@ describe('Cart - Remove Cart Item Tests', () => {
         cartId: testCart.id,
         productId: testProduct.id,
         quantity: 2,
+        price: 80,
         subtotal: 160,
       },
     });
@@ -120,6 +124,7 @@ describe('Cart - Remove Cart Item Tests', () => {
         cartId: testCart.id,
         productId: anotherProduct.id,
         quantity: 1,
+        price: 80,
         subtotal: 150,
       },
     });
@@ -137,6 +142,7 @@ describe('Cart - Remove Cart Item Tests', () => {
         cartId: anotherUserCart.id,
         productId: testProduct.id,
         quantity: 1,
+        price: 80,
         subtotal: 80,
       },
     });
@@ -364,25 +370,12 @@ describe('Cart - Remove Cart Item Tests', () => {
     });
 
     test('should handle removal when cart has single item', async () => {
-      // Create a cart with single item
-      const singleItemCart = await prisma.cart.create({
-        data: {
-          userId: testUser.id,
-          totalAmount: 80,
-        },
+      // Reduce the seeded cart to a single item first
+      await prisma.cartItem.deleteMany({
+        where: { cartId: testCart.id, NOT: { id: testCartItem.id } },
       });
-
-      const singleItem = await prisma.cartItem.create({
-        data: {
-          cartId: singleItemCart.id,
-          productId: testProduct.id,
-          quantity: 1,
-          subtotal: 80,
-        },
-      });
-
       const response = await request(app)
-        .delete(`/api/cart/${singleItem.id}`)
+        .delete(`/api/cart/${testCartItem.id}`)
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(response.status).toBe(200);

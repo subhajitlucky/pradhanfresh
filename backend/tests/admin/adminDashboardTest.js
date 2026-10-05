@@ -3,8 +3,10 @@ const app = require('../../server');
 const prisma = require('../../prisma/client');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { resetDb } = require('../testUtils');
 
 describe('Admin - Dashboard Tests', () => {
+  beforeAll(resetDb);
   let adminUser;
   let regularUser;
   let adminToken;
@@ -53,6 +55,7 @@ describe('Admin - Dashboard Tests', () => {
     testCategory = await prisma.category.create({
       data: {
         name: 'Test Category',
+        slug: 'test-category',
         description: 'Test category for admin tests',
       },
     });
@@ -130,6 +133,10 @@ describe('Admin - Dashboard Tests', () => {
         data: {
           orderId: order.id,
           productId: testProduct.id,
+          productName: testProduct.name,
+          productSku: testProduct.sku,
+          unit: testProduct.unit,
+          thumbnail: testProduct.thumbnail,
           quantity: 1,
           price: testProduct.price,
           subtotal: 100,

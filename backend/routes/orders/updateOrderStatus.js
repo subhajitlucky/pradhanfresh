@@ -16,7 +16,7 @@ router.put('/:orderNumber/status', requireAuth, async (req, res) => {
     // === ADMIN AUTHORIZATION ===
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { role: true, name: true, email: true }
+      select: { id: true, role: true, name: true, email: true }
     });
 
     if (!user || user.role !== 'ADMIN') {
@@ -38,7 +38,11 @@ router.put('/:orderNumber/status', requireAuth, async (req, res) => {
 
     const statusValidation = validateStatusUpdateInput({ status });
     if (!statusValidation.valid) {
-      return res.status(400).json(statusValidation);
+      return res.status(400).json({
+        success: false,
+        message: statusValidation.message,
+        error: statusValidation.error || 'Validation Error',
+      });
     }
 
     // === GET CURRENT ORDER ===

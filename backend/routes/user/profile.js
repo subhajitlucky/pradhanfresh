@@ -46,7 +46,11 @@ router.put('/', async (req, res) => {
     // === VALIDATE INPUT ===
     const validation = validateProfileUpdate(req.body);
     if (!validation.valid) {
-      return res.status(400).json(validation);
+      return res.status(400).json({
+        success: false,
+        message: validation.message,
+        error: validation.error || 'Validation Error',
+      });
     }
 
     // === UPDATE PROFILE ===
@@ -76,7 +80,11 @@ router.post('/change-password', async (req, res) => {
     // === VALIDATE INPUT ===
     const validation = validatePasswordChange(req.body);
     if (!validation.valid) {
-      return res.status(400).json(validation);
+      return res.status(400).json({
+        success: false,
+        message: validation.message,
+        error: validation.error || 'Validation Error',
+      });
     }
 
     // === CHANGE PASSWORD ===

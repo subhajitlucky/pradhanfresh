@@ -2,8 +2,10 @@ const request = require('supertest');
 const app = require('../../server');
 const prisma = require('../../prisma/client');
 const crypto = require('crypto');
+const { resetDb } = require('../testUtils');
 
 describe('Auth - Email Verification Tests', () => {
+  beforeAll(resetDb);
   let testUser;
   let verificationToken;
 

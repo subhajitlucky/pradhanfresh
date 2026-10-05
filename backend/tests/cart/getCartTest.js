@@ -3,8 +3,10 @@ const app = require('../../server');
 const prisma = require('../../prisma/client');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { resetDb } = require('../testUtils');
 
 describe('Cart - Get Cart Tests', () => {
+  beforeAll(resetDb);
   let testUser;
   let anotherUser;
   let userToken;
@@ -21,7 +23,7 @@ describe('Cart - Get Cart Tests', () => {
         name: 'Test User',
         email: 'testuser@example.com',
         password: hashedPassword,
-        role: 'user',
+        role: 'USER',
         isEmailVerified: true,
       },
     });
@@ -31,7 +33,7 @@ describe('Cart - Get Cart Tests', () => {
         name: 'Another User',
         email: 'anotheruser@example.com',
         password: hashedPassword,
-        role: 'user',
+        role: 'USER',
         isEmailVerified: true,
       },
     });
@@ -53,6 +55,7 @@ describe('Cart - Get Cart Tests', () => {
     testCategory = await prisma.category.create({
       data: {
         name: 'Test Category',
+        slug: 'test-category',
         description: 'Test category for cart tests',
       },
     });
@@ -143,7 +146,7 @@ describe('Cart - Get Cart Tests', () => {
       const cart = await prisma.cart.create({
         data: {
           userId: testUser.id,
-          totalAmount: 230,
+          totalAmount: 310,
         },
       });
 
@@ -152,6 +155,7 @@ describe('Cart - Get Cart Tests', () => {
           cartId: cart.id,
           productId: testProduct.id,
           quantity: 2,
+          price: 80,
           subtotal: 160, // 2 * 80 (sale price)
         },
       });
@@ -161,6 +165,7 @@ describe('Cart - Get Cart Tests', () => {
           cartId: cart.id,
           productId: anotherProduct.id,
           quantity: 1,
+          price: 80,
           subtotal: 150,
         },
       });
@@ -192,6 +197,7 @@ describe('Cart - Get Cart Tests', () => {
           cartId: cart.id,
           productId: testProduct.id,
           quantity: 2,
+          price: 80,
           subtotal: 160,
         },
       });
@@ -204,6 +210,7 @@ describe('Cart - Get Cart Tests', () => {
       expect(response.body.data.cart.items[0]).toMatchObject({
         id: expect.any(Number),
         quantity: 2,
+        price: 80,
         subtotal: 160,
         product: expect.objectContaining({
           id: testProduct.id,
@@ -233,6 +240,7 @@ describe('Cart - Get Cart Tests', () => {
           cartId: userCart.id,
           productId: testProduct.id,
           quantity: 2,
+          price: 80,
           subtotal: 160,
         },
       });
@@ -250,6 +258,7 @@ describe('Cart - Get Cart Tests', () => {
           cartId: anotherUserCart.id,
           productId: anotherProduct.id,
           quantity: 1,
+          price: 80,
           subtotal: 150,
         },
       });
@@ -288,6 +297,7 @@ describe('Cart - Get Cart Tests', () => {
           cartId: cart.id,
           productId: testProduct.id,
           quantity: 100, // Exceeds stock of 50
+          price: 80,
           subtotal: 8000,
         },
       });
@@ -324,6 +334,7 @@ describe('Cart - Get Cart Tests', () => {
           cartId: cart.id,
           productId: testProduct.id,
           quantity: 2,
+          price: 80,
           subtotal: 160,
         },
       });
@@ -361,6 +372,7 @@ describe('Cart - Get Cart Tests', () => {
           cartId: cart.id,
           productId: testProduct.id,
           quantity: 2,
+          price: 80,
           subtotal: 160, // Old subtotal based on sale price 80
         },
       });
@@ -377,7 +389,9 @@ describe('Cart - Get Cart Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data.totalAmount).toBe(180); // 2 * 90 = 180
-      expect(response.body.data.needsRecalculation).toBe(true);
+      // Recalculation persisted to the stored cart total
+      const stored = await prisma.cart.findUnique({ where: { id: cart.id } });
+      expect(stored.totalAmount).toBe(180);
 
       // Reset product price
       await prisma.product.update({
@@ -422,6 +436,7 @@ describe('Cart - Get Cart Tests', () => {
           cartId: cart.id,
           productId: testProduct.id,
           quantity: 2,
+          price: 80,
           subtotal: 160,
           createdAt: new Date('2024-01-01T10:00:00Z')
         },
@@ -432,6 +447,7 @@ describe('Cart - Get Cart Tests', () => {
           cartId: cart.id,
           productId: anotherProduct.id,
           quantity: 1,
+          price: 80,
           subtotal: 150,
           createdAt: new Date('2024-01-01T11:00:00Z')
         },
@@ -463,6 +479,7 @@ describe('Cart - Get Cart Tests', () => {
           cartId: cart.id,
           productId: testProduct.id,
           quantity: 2,
+          price: 80,
           subtotal: 160,
         },
       });
@@ -514,6 +531,7 @@ describe('Cart - Get Cart Tests', () => {
           cartId: cart.id,
           productId: testProduct.id,
           quantity: 100, // Exceeds stock
+          price: 80,
           subtotal: 8000,
         },
       });
@@ -524,6 +542,7 @@ describe('Cart - Get Cart Tests', () => {
           cartId: cart.id,
           productId: unavailableProduct.id,
           quantity: 1,
+          price: 80,
           subtotal: 200,
         },
       });

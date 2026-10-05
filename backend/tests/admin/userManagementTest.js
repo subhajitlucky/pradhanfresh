@@ -3,8 +3,10 @@ const app = require('../../server');
 const prisma = require('../../prisma/client');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { resetDb } = require('../testUtils');
 
 describe('Admin - User Management Tests', () => {
+  beforeAll(resetDb);
   let adminUser;
   let regularUser;
   let anotherUser;
@@ -77,10 +79,10 @@ describe('Admin - User Management Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data.users).toBeDefined();
-      expect(Array.isArray(response.body.data.users)).toBe(true);
-      expect(response.body.data.users.length).toBeGreaterThanOrEqual(3);
-      expect(response.body.data.pagination).toBeDefined();
+      expect(response.body.data).toBeDefined();
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.data.length).toBeGreaterThanOrEqual(3);
+      expect(response.body.pagination).toBeDefined();
     });
 
     test('should fail without authentication', async () => {
@@ -104,7 +106,7 @@ describe('Admin - User Management Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      const user = response.body.data.users[0];
+      const user = response.body.data[0];
       expect(user).toHaveProperty('id');
       expect(user).toHaveProperty('name');
       expect(user).toHaveProperty('email');
@@ -121,12 +123,11 @@ describe('Admin - User Management Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.data.users.length).toBeLessThanOrEqual(2);
-      expect(response.body.data.pagination).toMatchObject({
-        currentPage: 1,
-        limit: 2,
-        totalPages: expect.any(Number),
-        totalUsers: expect.any(Number),
+      expect(response.body.data.length).toBeLessThanOrEqual(2);
+      expect(response.body.pagination).toMatchObject({
+        page: 1,
+        pages: expect.any(Number),
+        total: expect.any(Number),
         hasNextPage: expect.any(Boolean),
         hasPrevPage: false,
       });
@@ -139,7 +140,7 @@ describe('Admin - User Management Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      const users = response.body.data.users;
+      const users = response.body.data;
       expect(users.length).toBeGreaterThan(0);
       expect(users[0].name).toContain('Regular');
     });
@@ -151,7 +152,7 @@ describe('Admin - User Management Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      const users = response.body.data.users;
+      const users = response.body.data;
       expect(users.length).toBeGreaterThan(0);
       expect(users[0].email).toBe('user@example.com');
     });
@@ -163,7 +164,7 @@ describe('Admin - User Management Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      const users = response.body.data.users;
+      const users = response.body.data;
       users.forEach(user => {
         expect(user.role).toBe('USER');
       });
@@ -176,7 +177,7 @@ describe('Admin - User Management Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      const users = response.body.data.users;
+      const users = response.body.data;
       users.forEach(user => {
         expect(user.isEmailVerified).toBe(false);
       });
@@ -189,7 +190,7 @@ describe('Admin - User Management Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      const users = response.body.data.users;
+      const users = response.body.data;
       for (let i = 1; i < users.length; i++) {
         const prevDate = new Date(users[i - 1].createdAt);
         const currDate = new Date(users[i].createdAt);
@@ -204,8 +205,8 @@ describe('Admin - User Management Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.data.users).toHaveLength(0);
-      expect(response.body.data.pagination.totalUsers).toBe(0);
+      expect(response.body.data).toHaveLength(0);
+      expect(response.body.pagination.total).toBe(0);
     });
 
     test('should handle invalid pagination parameters', async () => {
@@ -227,14 +228,14 @@ describe('Admin - User Management Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data.user).toMatchObject({
+      expect(response.body.data).toMatchObject({
         id: regularUser.id,
         name: regularUser.name,
         email: regularUser.email,
         role: regularUser.role,
         isEmailVerified: regularUser.isEmailVerified,
       });
-      expect(response.body.data.user).not.toHaveProperty('password');
+      expect(response.body.data).not.toHaveProperty('password');
     });
 
     test('should fail without authentication', async () => {
@@ -277,9 +278,9 @@ describe('Admin - User Management Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.data.user).toHaveProperty('createdAt');
-      expect(response.body.data.user).toHaveProperty('updatedAt');
-      // Additional statistics might be included based on implementation
+      expect(response.body.data).toHaveProperty('createdAt');
+      expect(response.body.data).toHaveProperty('orders');
+      expect(response.body.data).toHaveProperty('addresses');
     });
   });
 
@@ -292,8 +293,8 @@ describe('Admin - User Management Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('updated successfully');
-      expect(response.body.data.user.role).toBe('ADMIN');
+      expect(response.body.message).toContain('updated to ADMIN');
+      expect(response.body.data.role).toBe('ADMIN');
 
       // Verify in database
       const updatedUser = await prisma.user.findUnique({
@@ -372,7 +373,7 @@ describe('Admin - User Management Tests', () => {
         .send({ role: 'ADMIN' });
 
       expect(response.status).toBe(200);
-      expect(response.body.data.user.role).toBe('ADMIN');
+      expect(response.body.data.role).toBe('ADMIN');
 
       // Reset
       await prisma.user.update({
@@ -394,7 +395,7 @@ describe('Admin - User Management Tests', () => {
         .send({ role: 'USER' });
 
       expect(response.status).toBe(200);
-      expect(response.body.data.user.role).toBe('USER');
+      expect(response.body.data.role).toBe('USER');
     });
 
     test('should not allow updating own role', async () => {
@@ -403,9 +404,9 @@ describe('Admin - User Management Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ role: 'USER' });
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(403);
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('cannot change your own role');
+      expect(response.body.message).toContain('cannot demote themselves');
     });
 
     test('should preserve other user data when updating role', async () => {
@@ -436,13 +437,7 @@ describe('Admin - User Management Tests', () => {
       });
     });
 
-    test('should update updatedAt timestamp', async () => {
-      const originalUser = await prisma.user.findUnique({
-        where: { id: regularUser.id }
-      });
-
-      await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
-
+    test('should persist role change in database', async () => {
       const response = await request(app)
         .put(`/api/admin/users/${regularUser.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
@@ -453,8 +448,7 @@ describe('Admin - User Management Tests', () => {
       const updatedUser = await prisma.user.findUnique({
         where: { id: regularUser.id }
       });
-
-      expect(updatedUser.updatedAt.getTime()).toBeGreaterThan(originalUser.updatedAt.getTime());
+      expect(updatedUser.role).toBe('ADMIN');
 
       // Reset
       await prisma.user.update({

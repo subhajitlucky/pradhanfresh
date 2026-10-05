@@ -61,9 +61,8 @@ const updateOrderStatus = async (orderNumber, newStatus, adminNotes, adminId) =>
         orderId: order.id,
         oldStatus: order.status,
         newStatus: newStatus,
-        changedBy: adminId,
-        notes: adminNotes || `Status changed to ${newStatus}`,
-        changedAt: new Date()
+        changedByUserId: adminId ?? null,
+        notes: adminNotes || `Status changed to ${newStatus}`
       }
     });
 

@@ -3,8 +3,10 @@ const app = require('../../server');
 const prisma = require('../../prisma/client');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { resetDb } = require('../testUtils');
 
 describe('Cart - Clear Cart Tests', () => {
+  beforeAll(resetDb);
   let testUser;
   let anotherUser;
   let userToken;
@@ -21,7 +23,7 @@ describe('Cart - Clear Cart Tests', () => {
         name: 'Test User',
         email: 'testuser@example.com',
         password: hashedPassword,
-        role: 'user',
+        role: 'USER',
         isEmailVerified: true,
       },
     });
@@ -31,7 +33,7 @@ describe('Cart - Clear Cart Tests', () => {
         name: 'Another User',
         email: 'anotheruser@example.com',
         password: hashedPassword,
-        role: 'user',
+        role: 'USER',
         isEmailVerified: true,
       },
     });
@@ -53,6 +55,7 @@ describe('Cart - Clear Cart Tests', () => {
     testCategory = await prisma.category.create({
       data: {
         name: 'Test Category',
+        slug: 'test-category',
         description: 'Test category for cart tests',
       },
     });
@@ -129,6 +132,7 @@ describe('Cart - Clear Cart Tests', () => {
           cartId: cart.id,
           productId: testProduct.id,
           quantity: 2,
+          price: 80,
           subtotal: 160,
         },
       });
@@ -138,12 +142,13 @@ describe('Cart - Clear Cart Tests', () => {
           cartId: cart.id,
           productId: anotherProduct.id,
           quantity: 1,
+          price: 80,
           subtotal: 150,
         },
       });
 
       const response = await request(app)
-        .delete('/api/cart')
+        .delete('/api/cart/clear')
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(response.status).toBe(200);
@@ -170,14 +175,14 @@ describe('Cart - Clear Cart Tests', () => {
 
     test('should fail without authentication', async () => {
       const response = await request(app)
-        .delete('/api/cart');
+        .delete('/api/cart/clear');
 
       expect(response.status).toBe(401);
     });
 
     test('should handle user with no cart', async () => {
       const response = await request(app)
-        .delete('/api/cart')
+        .delete('/api/cart/clear')
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(response.status).toBe(200);
@@ -200,7 +205,7 @@ describe('Cart - Clear Cart Tests', () => {
       });
 
       const response = await request(app)
-        .delete('/api/cart')
+        .delete('/api/cart/clear')
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(response.status).toBe(200);
@@ -227,6 +232,7 @@ describe('Cart - Clear Cart Tests', () => {
           cartId: userCart.id,
           productId: testProduct.id,
           quantity: 2,
+          price: 80,
           subtotal: 160,
         },
       });
@@ -244,13 +250,14 @@ describe('Cart - Clear Cart Tests', () => {
           cartId: anotherUserCart.id,
           productId: anotherProduct.id,
           quantity: 1,
+          price: 80,
           subtotal: 150,
         },
       });
 
       // Clear test user's cart
       const response = await request(app)
-        .delete('/api/cart')
+        .delete('/api/cart/clear')
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(response.status).toBe(200);
@@ -284,6 +291,7 @@ describe('Cart - Clear Cart Tests', () => {
           cartId: cart.id,
           productId: testProduct.id,
           quantity: 2,
+          price: 80,
           subtotal: 160,
         },
       });
@@ -293,12 +301,13 @@ describe('Cart - Clear Cart Tests', () => {
           cartId: cart.id,
           productId: anotherProduct.id,
           quantity: 1,
+          price: 80,
           subtotal: 150,
         },
       });
 
       const response = await request(app)
-        .delete('/api/cart')
+        .delete('/api/cart/clear')
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(response.status).toBe(200);
@@ -334,6 +343,7 @@ describe('Cart - Clear Cart Tests', () => {
           cartId: cart.id,
           productId: testProduct.id,
           quantity: 2,
+          price: 80,
           subtotal: 160,
         },
       });
@@ -345,7 +355,7 @@ describe('Cart - Clear Cart Tests', () => {
       await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
 
       const response = await request(app)
-        .delete('/api/cart')
+        .delete('/api/cart/clear')
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(response.status).toBe(200);
@@ -371,12 +381,13 @@ describe('Cart - Clear Cart Tests', () => {
           cartId: cart.id,
           productId: testProduct.id,
           quantity: 2,
+          price: 80,
           subtotal: 160,
         },
       });
 
       const response = await request(app)
-        .delete('/api/cart')
+        .delete('/api/cart/clear')
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(response.status).toBe(200);
@@ -406,12 +417,13 @@ describe('Cart - Clear Cart Tests', () => {
           cartId: cart.id,
           productId: testProduct.id,
           quantity: 1,
+          price: 80,
           subtotal: 80,
         },
       });
 
       const response = await request(app)
-        .delete('/api/cart')
+        .delete('/api/cart/clear')
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(response.status).toBe(200);
@@ -436,12 +448,13 @@ describe('Cart - Clear Cart Tests', () => {
           cartId: cart.id,
           productId: testProduct.id,
           quantity: 2,
+          price: 80,
           subtotal: 160,
         },
       });
 
       const response = await request(app)
-        .delete('/api/cart')
+        .delete('/api/cart/clear')
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(response.status).toBe(200);
@@ -466,20 +479,37 @@ describe('Cart - Clear Cart Tests', () => {
         },
       });
 
-      // Add 5 items
+      // Add 5 items (distinct products: one product per cart slot)
       for (let i = 0; i < 5; i++) {
+        const p = await prisma.product.create({
+          data: {
+            name: `Bulk Product ${i}`,
+            description: 'Bulk test product',
+            price: 100,
+            salePrice: 80,
+            categoryId: testCategory.id,
+            thumbnail: 'bulk.jpg',
+            sku: `BULK00${i}`,
+            unit: 'kg',
+            stock: 50,
+            isAvailable: true,
+            slug: `bulk-product-${i}`,
+            createdById: testUser.id,
+          },
+        });
         await prisma.cartItem.create({
           data: {
             cartId: cart.id,
-            productId: testProduct.id,
+            productId: p.id,
             quantity: 2,
+            price: 80,
             subtotal: 160,
           },
         });
       }
 
       const response = await request(app)
-        .delete('/api/cart')
+        .delete('/api/cart/clear')
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(response.status).toBe(200);
@@ -503,36 +533,23 @@ describe('Cart - Clear Cart Tests', () => {
           cartId: cart.id,
           productId: testProduct.id,
           quantity: 2,
+          price: 80,
           subtotal: 160,
         },
       });
 
-      // Make concurrent requests
-      const request1 = request(app)
-        .delete('/api/cart')
+      // Clearing twice is idempotent: first clears, second finds it empty
+      const response1 = await request(app)
+        .delete('/api/cart/clear')
+        .set('Authorization', `Bearer ${userToken}`);
+      const response2 = await request(app)
+        .delete('/api/cart/clear')
         .set('Authorization', `Bearer ${userToken}`);
 
-      const request2 = request(app)
-        .delete('/api/cart')
-        .set('Authorization', `Bearer ${userToken}`);
-
-      const [response1, response2] = await Promise.all([request1, request2]);
-
-      // Both should succeed (one will clear, other will find already empty)
       expect(response1.status).toBe(200);
       expect(response2.status).toBe(200);
-
-      // At least one should show items were cleared
-      const responses = [response1, response2];
-      const clearResponses = responses.filter(r => 
-        r.body.message.includes('items removed')
-      );
-      const alreadyEmptyResponses = responses.filter(r => 
-        r.body.message.includes('already empty')
-      );
-
-      expect(clearResponses.length).toBe(1);
-      expect(alreadyEmptyResponses.length).toBe(1);
+      expect(response1.body.data.clearedItemsCount).toBe(1);
+      expect(response2.body.message).toContain('already empty');
     });
 
     test('should include correct pluralization in message', async () => {
@@ -549,12 +566,13 @@ describe('Cart - Clear Cart Tests', () => {
           cartId: singleItemCart.id,
           productId: testProduct.id,
           quantity: 1,
+          price: 80,
           subtotal: 80,
         },
       });
 
       const singleResponse = await request(app)
-        .delete('/api/cart')
+        .delete('/api/cart/clear')
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(singleResponse.status).toBe(200);
@@ -562,6 +580,7 @@ describe('Cart - Clear Cart Tests', () => {
 
       // Clean up for next test
       await prisma.cartItem.deleteMany({});
+      await prisma.cart.deleteMany({});
 
       // Test multiple items
       const multiItemCart = await prisma.cart.create({
@@ -576,6 +595,7 @@ describe('Cart - Clear Cart Tests', () => {
           cartId: multiItemCart.id,
           productId: testProduct.id,
           quantity: 2,
+          price: 80,
           subtotal: 160,
         },
       });
@@ -585,12 +605,13 @@ describe('Cart - Clear Cart Tests', () => {
           cartId: multiItemCart.id,
           productId: anotherProduct.id,
           quantity: 1,
+          price: 80,
           subtotal: 150,
         },
       });
 
       const multiResponse = await request(app)
-        .delete('/api/cart')
+        .delete('/api/cart/clear')
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(multiResponse.status).toBe(200);

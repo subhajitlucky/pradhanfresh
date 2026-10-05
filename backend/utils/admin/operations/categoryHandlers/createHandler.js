@@ -13,7 +13,7 @@ const handleCreateCategory = async (req, res) => {
   try {
     const validation = validateCategory(req.body);
     if (!validation.valid) {
-      return res.status(400).json(validation);
+      return res.status(400).json({ success: false, ...validation });
     }
 
     const newCategory = await createCategory(validation.data);

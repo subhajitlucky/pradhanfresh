@@ -2,8 +2,10 @@ const request = require('supertest');
 const app = require('../../server');
 const prisma = require('../../prisma/client');
 const bcrypt = require('bcrypt');
+const { resetDb } = require('../testUtils');
 
 describe('Product - Get Product By ID Tests', () => {
+  beforeAll(resetDb);
   let testCategory;
   let testProduct;
   let adminUser;
@@ -13,6 +15,7 @@ describe('Product - Get Product By ID Tests', () => {
     testCategory = await prisma.category.create({
       data: {
         name: 'Test Category',
+        slug: 'test-category',
         description: 'Test category for product retrieval',
       },
     });
@@ -24,7 +27,7 @@ describe('Product - Get Product By ID Tests', () => {
         name: 'Admin User',
         email: 'admin@test.com',
         password: hashedPassword,
-        role: 'admin',
+        role: 'ADMIN',
         isEmailVerified: true,
       },
     });
@@ -171,7 +174,7 @@ describe('Product - Get Product By ID Tests', () => {
       const response = await request(app)
         .get('/api/products/123.45');
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(404);
       // parseInt(123.45) = 123, so it should try to find product with ID 123
       expect(response.body.success).toBe(false);
       expect(response.body.message).toBe('Product with ID 123 not found');

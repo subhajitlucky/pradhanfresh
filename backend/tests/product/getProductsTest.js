@@ -1,16 +1,30 @@
 const request = require('supertest');
 const app = require('../../server');
 const prisma = require('../../prisma/client');
+const { resetDb } = require('../testUtils');
 
 describe('Product - Get Products Tests', () => {
+  beforeAll(resetDb);
   let testCategory;
   let testProducts = [];
+  let testUser;
 
   beforeAll(async () => {
+    testUser = await prisma.user.create({
+      data: {
+        name: 'Test User',
+        email: 'testuser@example.com',
+        password: 'hashedpassword',
+        role: 'USER',
+        isEmailVerified: true,
+      },
+    });
+
     // Create test category
     testCategory = await prisma.category.create({
       data: {
         name: 'Test Category',
+        slug: 'test-category',
         description: 'Test category for products',
       },
     });
@@ -64,7 +78,9 @@ describe('Product - Get Products Tests', () => {
     ];
 
     for (const productData of productsData) {
-      const product = await prisma.product.create({ data: productData });
+      const product = await prisma.product.create({
+        data: { ...productData, createdById: testUser.id },
+      });
       testProducts.push(product);
     }
   });
@@ -77,6 +93,7 @@ describe('Product - Get Products Tests', () => {
     await prisma.category.delete({
       where: { id: testCategory.id }
     });
+    await prisma.user.delete({ where: { id: testUser.id } });
     await prisma.$disconnect();
   });
 
@@ -121,7 +138,7 @@ describe('Product - Get Products Tests', () => {
         .query({ categories: testCategory.id.toString() });
 
       expect(response.status).toBe(200);
-      expect(response.body.data.length).toBe(3); // All test products
+      expect(response.body.data.length).toBe(2); // Only available products (Banana is out of stock)
       response.body.data.forEach(product => {
         expect(product.categoryId).toBe(testCategory.id);
       });
@@ -204,13 +221,14 @@ describe('Product - Get Products Tests', () => {
       expect(response.body.success).toBe(false);
     });
 
-    test('should handle invalid sort parameters', async () => {
+    test('should fall back to default sort for invalid sort parameters', async () => {
       const response = await request(app)
         .get('/api/products')
         .query({ sortBy: 'invalidField', sortOrder: 'invalidOrder' });
 
-      expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.data)).toBe(true);
     });
 
     test('should include category and creator information', async () => {

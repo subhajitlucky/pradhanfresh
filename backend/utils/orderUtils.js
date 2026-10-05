@@ -1,6 +1,14 @@
 // Import all order utility functions from modular files
 const { generateOrderNumber } = require('./order/support/orderNumber');
-const { calculateOrderTotals, calculateItemSubtotal, calculateDeliveryFee } = require('./cart/support/calculations');
+// These three live in the ORDER calculations module. The import previously
+// pointed at ./cart/support/calculations, which exports neither of them, so all
+// three were undefined and every order creation died with
+// "calculateDeliveryFee is not a function".
+const {
+  calculateOrderTotals,
+  calculateItemSubtotal,
+  calculateDeliveryFee
+} = require('./order/support/calculations');
 const { validateStatusTransition, validateCartForOrder, validateDeliveryAddress } = require('./order/validation');
 const { updateProductStock } = require('./order/support/stockManagement');
 const { getOrderStatusInfo } = require('./order/support/statusInfo');

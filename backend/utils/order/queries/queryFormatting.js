@@ -67,6 +67,7 @@ const calculateOrderPaginationMetadata = (totalOrders, pagination) => {
     totalPages: totalPages,
     totalOrders: totalOrders,
     ordersPerPage: limit,
+    limit: limit,
     hasNextPage: hasNextPage,
     hasPrevPage: hasPrevPage,
     nextPage: hasNextPage ? page + 1 : null,

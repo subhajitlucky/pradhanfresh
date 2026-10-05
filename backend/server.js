@@ -13,7 +13,16 @@ app.use('/uploads', express.static('uploads'));
 // --- Security Middleware ---
 
 // 1. Set security-related HTTP headers
-app.use(helmet());
+// helmet's default `crossOriginResourcePolicy: same-origin` makes the browser
+// refuse to render <img src="http://localhost:5000/uploads/..."> on a page
+// served from :5173, so every uploaded product photo silently failed to load in
+// the storefront. Uploaded images are public assets, not credentials.
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
 // 2. Configure CORS
 // Allow multiple origins in development (localhost & 127.0.0.1) and fallback to env variable
@@ -55,16 +64,12 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // 3. Set up rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: 'Too many requests from this IP, please try again after 15 minutes',
-});
+// Uses the shared limiter from middleware/rateLimiter.js so the general,
+// auth and refresh budgets live in one place.
+const { generalLimiter } = require('./middleware/rateLimiter');
 
 // Apply the rate limiter to all requests
-app.use(limiter);
+app.use(generalLimiter);
 
 const PORT = process.env.PORT || 5000;
 
@@ -99,9 +104,11 @@ app.get('/', (req, res) => {
   res.send('PradhanFresh backend is running 🥦');
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
+}
 
 // Export for Vercel
 module.exports = app;

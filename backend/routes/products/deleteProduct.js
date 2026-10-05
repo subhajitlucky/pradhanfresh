@@ -17,6 +17,15 @@ router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
       });
     }
 
+    // IDs outside PostgreSQL int4 range can never exist — skip the query
+    if (productId > 2147483647 || productId < -2147483648) {
+      return res.status(404).json({
+        success: false,
+        message: `Product with ID ${productId} not found`,
+        error: 'Not Found'
+      });
+    }
+
     // === STEP 2: CHECK IF PRODUCT EXISTS ===
     const existingProduct = await prisma.product.findUnique({
       where: { id: productId },

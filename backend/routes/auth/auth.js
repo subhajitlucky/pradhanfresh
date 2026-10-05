@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const prisma = require('../../prisma/client');
 const { sendPasswordResetEmail } = require('../../utils/auth/email');
+const { authLimiter } = require('../../middleware/rateLimiter');
 const router = express.Router();
 
 
@@ -11,7 +12,7 @@ router.get('/verify-email', async (req, res) => {
   const { token } = req.query;
 
   if (!token) {
-    return res.status(400).json({ error: 'Verification token is required.' });
+    return res.status(400).json({ success: false, error: 'Verification token is required.' });
   }
 
   try {
@@ -20,7 +21,7 @@ router.get('/verify-email', async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'Invalid verification token.' });
+      return res.status(404).json({ success: false, error: 'Invalid verification token.' });
     }
 
     await prisma.user.update({
@@ -37,11 +38,11 @@ router.get('/verify-email', async (req, res) => {
 
   } catch (error) {
     console.error('Error during email verification:', error);
-    res.status(500).json({ error: 'Internal server error during email verification.' });
+    res.status(500).json({ success: false, error: 'Internal server error during email verification.' });
   }
 });
 
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', authLimiter, async (req, res) => {
   const { email } = req.body;
 
   try {
@@ -70,19 +71,19 @@ router.post('/forgot-password', async (req, res) => {
   } catch (error) {
     console.error('Error during forgot password request:', error);
     // Generic error to avoid leaking information
-    res.status(500).json({ error: 'An error occurred while processing your request.' });
+    res.status(500).json({ success: false, error: 'An error occurred while processing your request.' });
   }
 });
 
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', authLimiter, async (req, res) => {
   const { token, password } = req.body;
 
   if (!token || !password) {
-    return res.status(400).json({ error: 'Token and new password are required.' });
+    return res.status(400).json({ success: false, error: 'Token and new password are required.' });
   }
 
   if (password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+    return res.status(400).json({ success: false, error: 'Password must be at least 6 characters long.' });
   }
 
   try {
@@ -91,7 +92,7 @@ router.post('/reset-password', async (req, res) => {
     });
 
     if (!user || user.passwordResetExpires < new Date()) {
-      return res.status(400).json({ error: 'Password reset token is invalid or has expired.' });
+      return res.status(400).json({ success: false, error: 'Password reset token is invalid or has expired.' });
     }
 
     const saltRounds = 10;
@@ -110,7 +111,7 @@ router.post('/reset-password', async (req, res) => {
 
   } catch (error) {
     console.error('Error during password reset:', error);
-    res.status(500).json({ error: 'An error occurred while resetting your password.' });
+    res.status(500).json({ success: false, error: 'An error occurred while resetting your password.' });
   }
 });
 

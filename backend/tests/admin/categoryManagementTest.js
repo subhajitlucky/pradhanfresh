@@ -3,8 +3,10 @@ const app = require('../../server');
 const prisma = require('../../prisma/client');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { resetDb } = require('../testUtils');
 
 describe('Admin - Category Management Tests', () => {
+  beforeAll(resetDb);
   let adminUser;
   let regularUser;
   let adminToken;
@@ -61,7 +63,8 @@ describe('Admin - Category Management Tests', () => {
   });
 
   afterEach(async () => {
-    // Clean up categories after each test
+    // Clean up products first (FK), then categories after each test
+    await prisma.product.deleteMany({});
     await prisma.category.deleteMany({
       where: {
         name: {
@@ -441,7 +444,7 @@ describe('Admin - Category Management Tests', () => {
       // Should fail due to foreign key constraint
       expect(response.status).toBe(409);
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('cannot be deleted');
+      expect(response.body.message.toLowerCase()).toContain('cannot delete');
 
       // Clean up
       await prisma.product.delete({ where: { id: product.id } });

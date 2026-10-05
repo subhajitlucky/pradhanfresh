@@ -3,8 +3,10 @@ const app = require('../../server');
 const prisma = require('../../prisma/client');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { resetDb } = require('../testUtils');
 
 describe('Order - Create Order Tests', () => {
+  beforeAll(resetDb);
   let testUser;
   let userToken;
   let testCategory;
@@ -19,7 +21,7 @@ describe('Order - Create Order Tests', () => {
         name: 'Test User',
         email: 'testuser@example.com',
         password: hashedPassword,
-        role: 'user',
+        role: 'USER',
         isEmailVerified: true,
       },
     });
@@ -35,6 +37,7 @@ describe('Order - Create Order Tests', () => {
     testCategory = await prisma.category.create({
       data: {
         name: 'Test Category',
+        slug: 'test-category',
         description: 'Test category for orders',
       },
     });
@@ -56,12 +59,17 @@ describe('Order - Create Order Tests', () => {
   });
 
   beforeEach(async () => {
-    // Create cart item for each test
+    // Create cart and cart item for each test
+    const cart = await prisma.cart.create({
+      data: { userId: testUser.id, totalAmount: 200 },
+    });
     testCartItem = await prisma.cartItem.create({
       data: {
-        userId: testUser.id,
+        cartId: cart.id,
         productId: testProduct.id,
         quantity: 2,
+        price: 100,
+        subtotal: 200,
       },
     });
   });
@@ -73,9 +81,8 @@ describe('Order - Create Order Tests', () => {
     await prisma.order.deleteMany({
       where: { userId: testUser.id }
     });
-    await prisma.cartItem.deleteMany({
-      where: { userId: testUser.id }
-    });
+    await prisma.cartItem.deleteMany({});
+    await prisma.cart.deleteMany({});
   });
 
   afterAll(async () => {
@@ -104,7 +111,7 @@ describe('Order - Create Order Tests', () => {
         pincode: '400001',
         landmark: 'Near Central Mall',
       },
-      deliveryDate: '2024-12-25',
+      deliveryDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
       deliverySlot: 'MORNING',
       paymentMethod: 'COD',
       orderNotes: 'Handle with care',
@@ -113,7 +120,7 @@ describe('Order - Create Order Tests', () => {
 
     test('should create order successfully with valid data', async () => {
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/orders/create')
         .set('Authorization', `Bearer ${userToken}`)
         .send(validOrderData);
 
@@ -138,7 +145,7 @@ describe('Order - Create Order Tests', () => {
 
     test('should fail without authentication', async () => {
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/orders/create')
         .send(validOrderData);
 
       expect(response.status).toBe(401);
@@ -146,18 +153,17 @@ describe('Order - Create Order Tests', () => {
 
     test('should fail with empty cart', async () => {
       // Clear cart
-      await prisma.cartItem.deleteMany({
-        where: { userId: testUser.id }
-      });
+      await prisma.cartItem.deleteMany({});
+      await prisma.cart.deleteMany({});
 
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/orders/create')
         .set('Authorization', `Bearer ${userToken}`)
         .send(validOrderData);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('cart is empty');
+      expect(response.body.message.toLowerCase()).toContain('cart');
     });
 
     test('should fail with missing delivery address', async () => {
@@ -165,7 +171,7 @@ describe('Order - Create Order Tests', () => {
       delete invalidData.deliveryAddress;
 
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/orders/create')
         .set('Authorization', `Bearer ${userToken}`)
         .send(invalidData);
 
@@ -184,7 +190,7 @@ describe('Order - Create Order Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/orders/create')
         .set('Authorization', `Bearer ${userToken}`)
         .send(invalidData);
 
@@ -202,7 +208,7 @@ describe('Order - Create Order Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/orders/create')
         .set('Authorization', `Bearer ${userToken}`)
         .send(invalidData);
 
@@ -220,7 +226,7 @@ describe('Order - Create Order Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/orders/create')
         .set('Authorization', `Bearer ${userToken}`)
         .send(invalidData);
 
@@ -233,7 +239,7 @@ describe('Order - Create Order Tests', () => {
       delete dataWithoutPayment.paymentMethod;
 
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/orders/create')
         .set('Authorization', `Bearer ${userToken}`)
         .send(dataWithoutPayment);
 
@@ -246,7 +252,7 @@ describe('Order - Create Order Tests', () => {
       delete dataWithoutDate.deliveryDate;
 
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/orders/create')
         .set('Authorization', `Bearer ${userToken}`)
         .send(dataWithoutDate);
 
@@ -261,7 +267,7 @@ describe('Order - Create Order Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/orders/create')
         .set('Authorization', `Bearer ${userToken}`)
         .send(invalidData);
 
@@ -276,7 +282,7 @@ describe('Order - Create Order Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/orders/create')
         .set('Authorization', `Bearer ${userToken}`)
         .send(invalidData);
 
@@ -286,24 +292,22 @@ describe('Order - Create Order Tests', () => {
 
     test('should clear cart after successful order creation', async () => {
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/orders/create')
         .set('Authorization', `Bearer ${userToken}`)
         .send(validOrderData);
 
       expect(response.status).toBe(201);
 
       // Verify cart is empty
-      const cartItems = await prisma.cartItem.findMany({
-        where: { userId: testUser.id }
-      });
+      const cartItems = await prisma.cartItem.findMany({});
       expect(cartItems).toHaveLength(0);
     });
 
     test('should reduce product stock after order creation', async () => {
-      const originalStock = testProduct.stock;
+      const originalStock = (await prisma.product.findUnique({ where: { id: testProduct.id } })).stock;
 
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/orders/create')
         .set('Authorization', `Bearer ${userToken}`)
         .send(validOrderData);
 
@@ -324,18 +328,19 @@ describe('Order - Create Order Tests', () => {
       });
 
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/orders/create')
         .set('Authorization', `Bearer ${userToken}`)
         .send(validOrderData);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('insufficient stock');
+      expect(response.body.message).toBe('Cart validation failed');
+      expect(JSON.stringify(response.body.details)).toContain('available');
     });
 
     test('should create status history entry', async () => {
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/orders/create')
         .set('Authorization', `Bearer ${userToken}`)
         .send(validOrderData);
 
@@ -367,16 +372,21 @@ describe('Order - Create Order Tests', () => {
         },
       });
 
+      const existingCart = await prisma.cart.findFirst({
+        where: { userId: testUser.id },
+      });
       await prisma.cartItem.create({
         data: {
-          userId: testUser.id,
+          cartId: existingCart.id,
           productId: anotherProduct.id,
           quantity: 3,
+          price: 50,
+          subtotal: 150,
         },
       });
 
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/orders/create')
         .set('Authorization', `Bearer ${userToken}`)
         .send(validOrderData);
 

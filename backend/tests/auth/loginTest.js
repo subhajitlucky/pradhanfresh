@@ -2,8 +2,10 @@ const request = require('supertest');
 const app = require('../../server');
 const prisma = require('../../prisma/client');
 const bcrypt = require('bcrypt');
+const { resetDb } = require('../testUtils');
 
 describe('Auth - Login Tests', () => {
+  beforeAll(resetDb);
   let testUser;
 
   beforeAll(async () => {

@@ -11,14 +11,29 @@ const refreshTokenRoute = require('./refreshToken');
 
 // Import middleware
 const requireAuth = require('../../middleware/requireAuth');
-const { authLimiter } = require('../../middleware/rateLimiter');
+const { authLimiter, refreshLimiter } = require('../../middleware/rateLimiter');
 
-// Mount auth routes
-router.use('/', authLimiter, authRoutes);           // /api/auth/*
-router.use('/signup', authLimiter, signupRoute);    // /api/auth/signup
-router.use('/login', authLimiter, loginRoute);      // /api/auth/login
-router.use('/logout', logoutRoute);    // /api/auth/logout
-router.use('/profile', requireAuth, profileRoute);  // /api/auth/profile (protected)
-router.use('/refresh-token', authLimiter, refreshTokenRoute);    // /api/auth/refresh-token
+/**
+ * Limiters are attached per route, never with a blanket mount that also
+ * matched the specific mounts below — that double-counted every request
+ * against a 10-request budget.
+ *
+ * forgot/reset carry the strict limiter inside auth.js, next to the handlers
+ * they actually protect.
+ */
+// Sub-routers are mounted with `router.use`, not `router.post` — passing a
+// Router to a method helper registers nothing and every request 404s.
+router.use('/signup', authLimiter, signupRoute);
+router.use('/login', authLimiter, loginRoute);
+router.use('/logout', logoutRoute);
 
-module.exports = router; 
+router.use('/profile', requireAuth, profileRoute);
+
+// Called automatically by the SPA whenever an access token expires, so it gets
+// the looser budget.
+router.use('/refresh-token', refreshLimiter, refreshTokenRoute);
+
+// verify-email / forgot-password / reset-password
+router.use('/', refreshLimiter, authRoutes);
+
+module.exports = router;

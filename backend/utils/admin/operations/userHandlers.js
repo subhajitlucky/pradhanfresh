@@ -13,13 +13,21 @@ const handleGetUsers = async (req, res) => {
   try {
     const paginationValidation = validatePaginationParams(req.query);
     if (!paginationValidation.valid) {
-      return res.status(400).json(paginationValidation);
+      return res.status(400).json({ success: false, ...paginationValidation });
     }
 
     const { page, limit, skip } = paginationValidation.data;
     const search = req.query.search || '';
+    const role = req.query.role;
+    if (role !== undefined && !['USER', 'ADMIN'].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Role must be USER or ADMIN',
+        error: 'Validation Error'
+      });
+    }
 
-    const result = await getUsers({ page, limit, skip, search });
+    const result = await getUsers({ page, limit, skip, search, role, isEmailVerified: req.query.isEmailVerified });
 
     res.status(200).json({
       success: true,
@@ -45,7 +53,7 @@ const handleGetUserDetails = async (req, res) => {
   try {
     const userIdValidation = validateUserId(req.params.id);
     if (!userIdValidation.valid) {
-      return res.status(400).json(userIdValidation);
+      return res.status(400).json({ success: false, ...userIdValidation });
     }
 
     const { userId } = userIdValidation.data;
@@ -84,14 +92,14 @@ const handleUpdateUserRole = async (req, res) => {
   try {
     const userIdValidation = validateUserId(req.params.id);
     if (!userIdValidation.valid) {
-      return res.status(400).json(userIdValidation);
+      return res.status(400).json({ success: false, ...userIdValidation });
     }
 
     const { userId: targetUserId } = userIdValidation.data;
 
     const roleValidation = validateUserRole(req.body);
     if (!roleValidation.valid) {
-      return res.status(400).json(roleValidation);
+      return res.status(400).json({ success: false, ...roleValidation });
     }
 
     const { role } = roleValidation.data;

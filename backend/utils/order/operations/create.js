@@ -49,26 +49,49 @@ const createOrderFromCart = async (orderData, cart) => {
       }
     });
 
-    // Create order items
+    // Create order items.
+    // productName / productSku / unit are required by the schema and are a
+    // *snapshot* of the product at purchase time, so they are copied from the
+    // product rather than joined at read time — the catalogue may change later.
     const orderItems = [];
     for (const cartItem of cart.items) {
       const itemSubtotal = calculateItemSubtotal(cartItem.quantity, cartItem.price);
-      
+      const product = cartItem.product;
+
+      if (!product) {
+        throw new Error(`Product ${cartItem.productId} no longer exists`);
+      }
+
       const orderItem = await prisma.orderItem.create({
         data: {
           orderId: newOrder.id,
           productId: cartItem.productId,
+          productName: product.name,
+          productSku: product.sku,
+          unit: product.unit,
+          thumbnail: product.thumbnail,
           quantity: cartItem.quantity,
           price: cartItem.price,
           subtotal: itemSubtotal
         }
       });
-      
+
       orderItems.push(orderItem);
     }
 
     // Update product stock
     await updateProductStock(cart.items, 'REDUCE');
+
+    // Record the initial PENDING status in history
+    await prisma.orderStatusHistory.create({
+      data: {
+        orderId: newOrder.id,
+        oldStatus: 'PENDING',
+        newStatus: 'PENDING',
+        changedByUserId: userId,
+        notes: 'Order created'
+      }
+    });
 
     // Clear user's cart
     await prisma.cartItem.deleteMany({

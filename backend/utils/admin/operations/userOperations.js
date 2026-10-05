@@ -4,15 +4,20 @@ const prisma = require('../../../prisma/client');
  * Get users with search and pagination for admin
  */
 const getUsers = async (params) => {
-  const { page, limit, skip, search } = params;
+  const { page, limit, skip, search, role, isEmailVerified } = params;
 
   // Build search clause
-  const whereClause = search ? {
-    OR: [
-      { name: { contains: search, mode: 'insensitive' } },
-      { email: { contains: search, mode: 'insensitive' } },
-    ],
-  } : {};
+  const whereClause = {
+    ...(search ? {
+      OR: [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ],
+    } : {}),
+    ...(role ? { role } : {}),
+    ...(isEmailVerified === 'true' ? { isEmailVerified: true } : {}),
+    ...(isEmailVerified === 'false' ? { isEmailVerified: false } : {}),
+  };
 
   // Get users with order count
   const users = await prisma.user.findMany({
@@ -112,8 +117,7 @@ const updateUserRole = async (userId, newRole, adminId) => {
       id: true,
       name: true,
       email: true,
-      role: true,
-      updatedAt: true
+      role: true
     }
   });
 

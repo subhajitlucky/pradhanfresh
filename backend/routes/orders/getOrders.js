@@ -17,12 +17,32 @@ router.get('/', requireAuth, async (req, res) => {
     // === VALIDATE PARAMETERS ===
     const paginationValidation = validatePaginationParams(params.pagination);
     if (!paginationValidation.valid) {
-      return res.status(400).json(paginationValidation);
+      return res.status(400).json({ success: false, ...paginationValidation });
     }
 
     const sortValidation = validateSortParams(params.sorting);
     if (!sortValidation.valid) {
-      return res.status(400).json(sortValidation);
+      return res.status(400).json({ success: false, ...sortValidation });
+    }
+
+    // === VALIDATE FILTERS (invalid values must 400, not crash Prisma) ===
+    const VALID_ORDER_STATUSES = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'RETURNED'];
+    if (params.filters.status && !VALID_ORDER_STATUSES.includes(params.filters.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status filter. Must be one of: ${VALID_ORDER_STATUSES.join(', ')}`,
+        error: 'Validation Error'
+      });
+    }
+    for (const key of ['startDate', 'endDate']) {
+      const value = params.filters[key];
+      if (value !== undefined && isNaN(new Date(value).getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid ${key} format. Must be a valid date.`,
+          error: 'Validation Error'
+        });
+      }
     }
 
     // === BUILD QUERY COMPONENTS ===

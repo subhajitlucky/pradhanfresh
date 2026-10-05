@@ -3,8 +3,10 @@ const app = require('../../server');
 const prisma = require('../../prisma/client');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { resetDb } = require('../testUtils');
 
 describe('Product - Delete Product Tests', () => {
+  beforeAll(resetDb);
   let adminUser;
   let regularUser;
   let adminToken;
@@ -17,6 +19,7 @@ describe('Product - Delete Product Tests', () => {
     testCategory = await prisma.category.create({
       data: {
         name: 'Test Category',
+        slug: 'test-category',
         description: 'Test category for product deletion',
       },
     });
@@ -28,7 +31,7 @@ describe('Product - Delete Product Tests', () => {
         name: 'Admin User',
         email: 'admin@test.com',
         password: hashedPassword,
-        role: 'admin',
+        role: 'ADMIN',
         isEmailVerified: true,
       },
     });
@@ -39,7 +42,7 @@ describe('Product - Delete Product Tests', () => {
         name: 'Regular User',
         email: 'user@test.com',
         password: hashedPassword,
-        role: 'user',
+        role: 'USER',
         isEmailVerified: true,
       },
     });

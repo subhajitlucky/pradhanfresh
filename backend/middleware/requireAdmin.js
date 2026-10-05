@@ -2,7 +2,7 @@ const requireAdmin = (req, res, next) => {
   if (req.user && req.user.role === 'ADMIN') {
     next();
   } else {
-    res.status(403).json({ error: 'Forbidden: Access is restricted to administrators.' });
+    res.status(403).json({ success: false, error: 'Forbidden: Access is restricted to administrators.' });
   }
 };
 

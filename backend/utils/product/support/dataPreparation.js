@@ -73,7 +73,8 @@ const prepareUpdateData = (rawData, existingProduct, newSlug = null) => {
     unit,
     weight,
     isFeatured,
-    isOrganic
+    isOrganic,
+    isAvailable
   } = rawData;
 
   const updateData = {};
@@ -96,6 +97,7 @@ const prepareUpdateData = (rawData, existingProduct, newSlug = null) => {
   if (weight !== undefined) updateData.weight = weight ? parseFloat(weight) : null;
   if (isFeatured !== undefined) updateData.isFeatured = Boolean(isFeatured);
   if (isOrganic !== undefined) updateData.isOrganic = Boolean(isOrganic);
+  if (isAvailable !== undefined) updateData.isAvailable = Boolean(isAvailable);
 
   // Handle images array
   if (images !== undefined) {

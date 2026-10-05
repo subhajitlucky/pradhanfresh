@@ -20,6 +20,15 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
       });
     }
 
+    // IDs outside PostgreSQL int4 range can never exist — skip the query
+    if (productId > 2147483647 || productId < -2147483648) {
+      return res.status(404).json({
+        success: false,
+        message: `Product with ID ${productId} not found`,
+        error: 'Not Found'
+      });
+    }
+
     // === STEP 2: CHECK IF PRODUCT EXISTS ===
     const existingProduct = await prisma.product.findUnique({
       where: { id: productId },
@@ -53,7 +62,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
         salePrice: req.body.salePrice 
       });
       if (!pricingCheck.valid) {
-        return res.status(400).json(pricingCheck);
+        return res.status(400).json({ success: false, ...pricingCheck });
       }
     }
 
@@ -61,7 +70,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
     if (req.body.categoryId !== undefined) {
       const categoryCheck = await validateCategory(req.body.categoryId);
       if (!categoryCheck.valid) {
-        return res.status(400).json(categoryCheck);
+        return res.status(400).json({ success: false, ...categoryCheck });
       }
     }
 
@@ -69,7 +78,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
     if (req.body.stock !== undefined) {
       const stockCheck = validateStock(req.body.stock);
       if (!stockCheck.valid) {
-        return res.status(400).json(stockCheck);
+        return res.status(400).json({ success: false, ...stockCheck });
       }
     }
 
@@ -77,7 +86,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
     if (req.body.sku !== undefined) {
       const skuCheck = await validateSKUUniqueness(req.body.sku, productId);
       if (!skuCheck.valid) {
-        return res.status(409).json(skuCheck);
+        return res.status(409).json({ success: false, ...skuCheck });
       }
     }
 

@@ -3,8 +3,10 @@ const app = require('../../server');
 const prisma = require('../../prisma/client');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { resetDb } = require('../testUtils');
 
 describe('Order - Get Order Details Tests', () => {
+  beforeAll(resetDb);
   let testUser;
   let anotherUser;
   let userToken;
@@ -22,7 +24,7 @@ describe('Order - Get Order Details Tests', () => {
         name: 'Test User',
         email: 'testuser@example.com',
         password: hashedPassword,
-        role: 'user',
+        role: 'USER',
         isEmailVerified: true,
       },
     });
@@ -32,7 +34,7 @@ describe('Order - Get Order Details Tests', () => {
         name: 'Another User',
         email: 'anotheruser@example.com',
         password: hashedPassword,
-        role: 'user',
+        role: 'USER',
         isEmailVerified: true,
       },
     });
@@ -54,6 +56,7 @@ describe('Order - Get Order Details Tests', () => {
     testCategory = await prisma.category.create({
       data: {
         name: 'Test Category',
+        slug: 'test-category',
         description: 'Test category for orders',
       },
     });
@@ -95,7 +98,7 @@ describe('Order - Get Order Details Tests', () => {
         }),
         paymentMethod: 'COD',
         orderNotes: 'Handle with care',
-        deliveryDate: new Date('2024-12-25'),
+        deliveryDate: new Date(Date.now() + 86400000),
         deliverySlot: 'MORNING',
         userId: testUser.id,
       },
@@ -128,6 +131,10 @@ describe('Order - Get Order Details Tests', () => {
       data: {
         orderId: testOrder.id,
         productId: testProduct.id,
+          productName: testProduct.name,
+          productSku: testProduct.sku,
+          unit: testProduct.unit,
+          thumbnail: testProduct.thumbnail,
         quantity: 2,
         price: testProduct.price,
         subtotal: 200,
@@ -138,6 +145,10 @@ describe('Order - Get Order Details Tests', () => {
       data: {
         orderId: anotherUserOrder.id,
         productId: testProduct.id,
+          productName: testProduct.name,
+          productSku: testProduct.sku,
+          unit: testProduct.unit,
+          thumbnail: testProduct.thumbnail,
         quantity: 1,
         price: testProduct.price,
         subtotal: 100,
@@ -367,7 +378,7 @@ describe('Order - Get Order Details Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data.estimatedDelivery).toBeDefined();
-      expect(response.body.data.estimatedDelivery).toBe('2024-12-25');
+      expect(response.body.data.estimatedDelivery).toBe(new Date(Date.now() + 86400000).toISOString().split('T')[0]);
     });
 
     test('should handle order with pending status (can cancel)', async () => {

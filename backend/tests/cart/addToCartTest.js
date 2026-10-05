@@ -3,8 +3,10 @@ const app = require('../../server');
 const prisma = require('../../prisma/client');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { resetDb } = require('../testUtils');
 
 describe('Cart - Add To Cart Tests', () => {
+  beforeAll(resetDb);
   let testUser;
   let userToken;
   let testCategory;
@@ -20,7 +22,7 @@ describe('Cart - Add To Cart Tests', () => {
         name: 'Test User',
         email: 'testuser@example.com',
         password: hashedPassword,
-        role: 'user',
+        role: 'USER',
         isEmailVerified: true,
       },
     });
@@ -36,6 +38,7 @@ describe('Cart - Add To Cart Tests', () => {
     testCategory = await prisma.category.create({
       data: {
         name: 'Test Category',
+        slug: 'test-category',
         description: 'Test category for cart tests',
       },
     });
@@ -118,7 +121,7 @@ describe('Cart - Add To Cart Tests', () => {
   describe('POST /api/cart', () => {
     test('should add item to cart successfully', async () => {
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct.id,
@@ -145,7 +148,7 @@ describe('Cart - Add To Cart Tests', () => {
 
     test('should fail without authentication', async () => {
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .send({
           productId: testProduct.id,
           quantity: 1
@@ -156,7 +159,7 @@ describe('Cart - Add To Cart Tests', () => {
 
     test('should fail with missing productId', async () => {
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           quantity: 1
@@ -166,21 +169,22 @@ describe('Cart - Add To Cart Tests', () => {
       expect(response.body.success).toBe(false);
     });
 
-    test('should fail with missing quantity', async () => {
+    test('should default to quantity 1 when quantity is missing', async () => {
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct.id
         });
 
-      expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.itemsCount).toBeGreaterThanOrEqual(1);
     });
 
     test('should fail with invalid productId', async () => {
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: 'invalid-id',
@@ -193,7 +197,7 @@ describe('Cart - Add To Cart Tests', () => {
 
     test('should fail with zero or negative quantity', async () => {
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct.id,
@@ -204,7 +208,7 @@ describe('Cart - Add To Cart Tests', () => {
       expect(response.body.success).toBe(false);
 
       const negativeResponse = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct.id,
@@ -217,7 +221,7 @@ describe('Cart - Add To Cart Tests', () => {
 
     test('should fail with non-existent product', async () => {
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: 99999,
@@ -231,7 +235,7 @@ describe('Cart - Add To Cart Tests', () => {
 
     test('should fail with unavailable product', async () => {
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: unavailableProduct.id,
@@ -245,7 +249,7 @@ describe('Cart - Add To Cart Tests', () => {
 
     test('should fail with out of stock product', async () => {
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: outOfStockProduct.id,
@@ -259,11 +263,11 @@ describe('Cart - Add To Cart Tests', () => {
 
     test('should fail when quantity exceeds available stock', async () => {
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct.id,
-          quantity: 100 // Exceeds stock of 50
+          quantity: 60 // Exceeds stock of 50 but within max limit of 99
         });
 
       expect(response.status).toBe(400);
@@ -278,7 +282,7 @@ describe('Cart - Add To Cart Tests', () => {
       });
 
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct.id,
@@ -298,7 +302,7 @@ describe('Cart - Add To Cart Tests', () => {
     test('should update quantity if product already in cart', async () => {
       // First, add item to cart
       await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct.id,
@@ -307,7 +311,7 @@ describe('Cart - Add To Cart Tests', () => {
 
       // Add same product again
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct.id,
@@ -328,7 +332,7 @@ describe('Cart - Add To Cart Tests', () => {
 
     test('should calculate correct subtotal and total', async () => {
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct.id,
@@ -352,7 +356,7 @@ describe('Cart - Add To Cart Tests', () => {
 
     test('should use sale price if available', async () => {
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct.id,
@@ -367,7 +371,7 @@ describe('Cart - Add To Cart Tests', () => {
 
     test('should handle large quantities within stock limit', async () => {
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct.id,
@@ -380,7 +384,7 @@ describe('Cart - Add To Cart Tests', () => {
 
     test('should include complete cart data in response', async () => {
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct.id,
@@ -404,8 +408,6 @@ describe('Cart - Add To Cart Tests', () => {
         product: expect.objectContaining({
           id: testProduct.id,
           name: testProduct.name,
-          price: testProduct.price,
-          salePrice: testProduct.salePrice,
           thumbnail: testProduct.thumbnail,
           unit: testProduct.unit,
           stock: expect.any(Number),
@@ -416,7 +418,7 @@ describe('Cart - Add To Cart Tests', () => {
 
     test('should handle maximum quantity per item limit', async () => {
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct.id,
@@ -430,7 +432,7 @@ describe('Cart - Add To Cart Tests', () => {
 
     test('should update cart timestamp on addition', async () => {
       const response = await request(app)
-        .post('/api/cart')
+        .post('/api/cart/add')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct.id,

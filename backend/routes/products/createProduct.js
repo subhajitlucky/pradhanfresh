@@ -13,29 +13,29 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
     // === VALIDATION LAYER 1: REQUIRED FIELDS ===
     const requiredFieldsCheck = validateRequiredFields(req.body);
     if (!requiredFieldsCheck.valid) {
-      return res.status(400).json(requiredFieldsCheck);
+      return res.status(400).json({ success: false, ...requiredFieldsCheck });
     }
 
     // === VALIDATION LAYER 2: DATA TYPE VALIDATION ===
     const pricingCheck = validatePricing(req.body);
     if (!pricingCheck.valid) {
-      return res.status(400).json(pricingCheck);
+      return res.status(400).json({ success: false, ...pricingCheck });
     }
 
     const categoryCheck = await validateCategory(req.body.categoryId);
     if (!categoryCheck.valid) {
-      return res.status(400).json(categoryCheck);
+      return res.status(400).json({ success: false, ...categoryCheck });
     }
 
     const stockCheck = validateStock(req.body.stock);
     if (!stockCheck.valid) {
-      return res.status(400).json(stockCheck);
+      return res.status(400).json({ success: false, ...stockCheck });
     }
 
     // === VALIDATION LAYER 3: BUSINESS LOGIC VALIDATION ===
     const skuCheck = await validateSKUUniqueness(req.body.sku);
     if (!skuCheck.valid) {
-      return res.status(409).json(skuCheck);
+      return res.status(409).json({ success: false, ...skuCheck });
     }
 
     // === GENERATE UNIQUE SLUG ===

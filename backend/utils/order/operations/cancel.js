@@ -62,9 +62,8 @@ const cancelOrder = async (orderNumber, userId, reason) => {
         orderId: order.id,
         oldStatus: order.status,
         newStatus: 'CANCELLED',
-        changedBy: userId,
-        notes: reason || 'Order cancelled by customer',
-        changedAt: new Date()
+        changedByUserId: userId,
+        notes: reason || 'Order cancelled by customer'
       }
     });
 
